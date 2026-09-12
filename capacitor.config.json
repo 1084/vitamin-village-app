@@ -1,0 +1,13 @@
+{
+  "appId": "com.vitaminvillage.app",
+  "appName": "Vitamin Village",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#FBFAF7",
+    "allowsLinkPreview": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

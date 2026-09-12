@@ -1,0 +1,19 @@
+{
+  "name": "vitamin-village-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vitamin Village for iOS: the web app wrapped with Capacitor, plus native haptics and persistent progress.",
+  "scripts": {
+    "prepare-www": "node scripts/prepare-www.mjs",
+    "sync": "npm run prepare-www && npx cap sync ios",
+    "open": "npx cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/haptics": "^8.0.2"
+  }
+}
