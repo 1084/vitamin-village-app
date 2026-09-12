@@ -10,7 +10,7 @@
 // Usage:  node scripts/prepare-www.mjs [path-to-vitamin-village-folder]
 // Default source: ../1084.github.io/vitamin-village (sibling checkout).
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,9 +24,16 @@ if (!existsSync(resolve(src, "index.html"))) {
   process.exit(1);
 }
 
+// Plain recursive copy (fs.cpSync trips over permission bits on some mounted volumes).
+function copyDir(from, to) {
+  mkdirSync(to, { recursive: true });
+  for (const name of readdirSync(from)) {
+    const a = resolve(from, name), b = resolve(to, name);
+    if (statSync(a).isDirectory()) copyDir(a, b); else copyFileSync(a, b);
+  }
+}
 rmSync(out, { recursive: true, force: true });
-mkdirSync(out, { recursive: true });
-cpSync(src, out, { recursive: true });
+copyDir(src, out);
 rmSync(resolve(out, "sw.js"), { force: true });
 
 let html = readFileSync(resolve(out, "index.html"), "utf8");
@@ -45,6 +52,6 @@ if (!html.includes("native.js")) {
 }
 
 writeFileSync(resolve(out, "index.html"), html);
-cpSync(resolve(root, "native/native.js"), resolve(out, "native.js"));
+copyFileSync(resolve(root, "native/native.js"), resolve(out, "native.js"));
 
 console.log(`www/ built from ${src}`);
