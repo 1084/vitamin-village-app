@@ -1,0 +1,51 @@
+# One-time job: create the ios/ Xcode project on a cloud Mac and commit it back.
+# Run it from the Actions tab ("Run workflow"). After it succeeds, Xcode Cloud can
+# build the app from this repo; this workflow is not needed again unless you
+# delete ios/ or change the app id.
+name: iOS bootstrap (create ios/ project)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+
+      - name: Check out the web app (storefront repo)
+        uses: actions/checkout@v4
+        with:
+          repository: 1084/1084.github.io
+          path: 1084.github.io
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build www/
+        working-directory: app
+        run: |
+          npm ci
+          npm run prepare-www
+
+      - name: Create the iOS project
+        working-directory: app
+        run: |
+          if [ -d ios ]; then echo "ios/ already exists; skipping cap add"; else npx cap add ios; fi
+          cp resources/PrivacyInfo.xcprivacy ios/App/App/PrivacyInfo.xcprivacy
+          npx cap sync ios
+
+      - name: Commit ios/ back to the repo
+        working-directory: app
+        run: |
+          git config user.name "John Hubert LLC"
+          git config user.email "support@johnhubert.llc"
+          git add ios
+          git commit -m "Add generated iOS project (Capacitor)" || echo "nothing to commit"
+          git push
