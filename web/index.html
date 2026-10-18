@@ -1,0 +1,730 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vitamin Village Plates</title>
+<meta name="description" content="Playable slice of the new Vitamin Village: build a plate from food cards, meet the buddies hiding in them, dress your chef, unlock real recipes.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+  :root { --bg:#F4F1E8; --paper:#FFFFFF; --ink:#2B2A28; --muted:#6D6A64; --line:#E6E1D6; --gold:#E0A93E; --green:#7DB33F; --red:#D96B45; --blue:#4E97DD; --soft:#FBF7EC; --shadow:0 2px 10px rgba(0,0,0,.08); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#171615; --paper:#232220; --ink:#F2EFE8; --muted:#A7A298; --line:#3A3733; --soft:#2B2925; --shadow:0 2px 10px rgba(0,0,0,.4); } }
+  :root[data-theme="dark"] { --bg:#171615; --paper:#232220; --ink:#F2EFE8; --muted:#A7A298; --line:#3A3733; --soft:#2B2925; --shadow:0 2px 10px rgba(0,0,0,.4); }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"Nunito", system-ui, -apple-system, sans-serif; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  #app { max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column; padding:env(safe-area-inset-top) 0 0; }
+  .view { flex:1; padding:12px 16px 96px; }
+  .top { display:flex; align-items:center; gap:12px; margin:4px 0 12px; }
+  .top .av { width:64px; height:64px; flex:0 0 auto; }
+  .top h1 { font-size:22px; margin:0; line-height:1.15; } .top .sub { color:var(--muted); font-size:13.5px; }
+  .eyebrow { font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:800; margin:14px 0 6px; }
+  /* plate */
+  .plate { background:var(--paper); border:1px solid var(--line); border-radius:999px; aspect-ratio:1/1; max-width:300px; margin:0 auto; position:relative; box-shadow:var(--shadow), inset 0 0 0 10px var(--soft); display:grid; place-items:center; }
+  .plate .rim { position:absolute; inset:0; border-radius:50%; border:1px solid var(--line); }
+  .plate .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:78%; }
+  .slot { aspect-ratio:1/1; border-radius:14px; border:2px dashed var(--line); display:grid; place-items:center; font-size:30px; position:relative; }
+  .slot.full { border-style:solid; border-color:transparent; background:var(--soft); animation:pop .35s cubic-bezier(.2,1.4,.4,1); }
+  .slot .pair { position:absolute; right:-4px; bottom:-4px; font-size:11px; font-weight:900; background:var(--gold); color:#3a2a06; border-radius:999px; padding:2px 6px; }
+  .slot .pair.space { background:#F6DCDC; color:#8b2c2c; }
+  .plate .empty { color:var(--muted); font-size:14px; text-align:center; padding:0 30px; }
+  @keyframes pop { from { transform:scale(.5); opacity:0 } to { transform:scale(1); opacity:1 } }
+  /* hand */
+  .hand { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:12px 0 10px; }
+  .card { background:var(--paper); border:2px solid var(--line); border-radius:14px; padding:8px 4px 6px; text-align:center; cursor:pointer; box-shadow:var(--shadow); transition:transform .15s, border-color .15s, box-shadow .15s; position:relative; }
+  .card .food { font-size:34px; line-height:1; } .card .n { font-size:11px; font-weight:800; margin-top:5px; line-height:1.15; min-height:26px; }
+  .card .bud { display:flex; justify-content:center; gap:3px; margin-top:5px; flex-wrap:wrap; }
+  .b { display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; font-size:9.5px; font-weight:900; border:1.5px solid rgba(0,0,0,.08); }
+  .card.sel { transform:translateY(-8px) scale(1.04); border-color:var(--gold); box-shadow:0 8px 20px rgba(224,169,62,.35); }
+  .card.hint { border-color:var(--green); } .card.hint::after { content:"✦"; position:absolute; top:-8px; right:-6px; background:var(--green); color:#fff; font-size:11px; border-radius:50%; width:18px; height:18px; display:grid; place-items:center; }
+  .card.out { animation:out .35s forwards; } @keyframes out { to { transform:translateY(-40px) scale(.6); opacity:0 } }
+  .card.in { animation:inn .35s cubic-bezier(.2,1.2,.4,1); } @keyframes inn { from { transform:translateY(30px) scale(.8); opacity:0 } }
+  .row { display:flex; gap:8px; align-items:center; }
+  .btn { font:inherit; font-weight:900; font-size:15px; padding:12px 18px; border-radius:14px; border:0; background:var(--green); color:#fff; cursor:pointer; box-shadow:var(--shadow); }
+  .btn.gold { background:var(--gold); color:#3a2a06; } .btn.ghost { background:transparent; color:var(--ink); border:1.5px solid var(--line); box-shadow:none; } .btn.block { width:100%; }
+  .btn:disabled { opacity:.4; box-shadow:none; }
+  .tip { color:var(--muted); font-size:13.5px; text-align:center; margin:4px 0 0; min-height:20px; }
+  /* result overlay */
+  #overlay { position:fixed; inset:0; background:rgba(20,18,14,.55); display:none; align-items:flex-end; justify-content:center; z-index:20; backdrop-filter:blur(3px); }
+  #overlay.on { display:flex; }
+  .sheet { background:var(--paper); width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom)); max-height:84vh; overflow:auto; animation:up .3s cubic-bezier(.2,.9,.2,1); }
+  @keyframes up { from { transform:translateY(40px); opacity:0 } }
+  .meet { display:flex; align-items:center; justify-content:center; gap:14px; margin:8px 0 10px; }
+  .meet .av { width:104px; height:139px; animation:bounce .6s ease-in-out infinite alternate; } .meet .av:nth-child(3) { animation-delay:.3s; }
+  .meet .heart { font-size:30px; animation:pop .5s; }
+  @keyframes bounce { from { transform:translateY(0) } to { transform:translateY(-10px) } }
+  .verdict { text-align:center; font-size:22px; font-weight:900; margin:0; } .verdict.space { color:var(--red); }
+  .say { text-align:center; font-size:16px; line-height:1.45; margin:8px 0 14px; }
+  .reward { background:#FFF6DD; border:1px solid #F1D98F; color:#633806; border-radius:14px; padding:12px 14px; font-weight:800; margin:8px 0; display:flex; gap:10px; align-items:center; } .reward .big { font-size:28px; }
+  .confetti { position:fixed; width:10px; height:14px; top:-20px; z-index:30; animation:fall 1.6s linear forwards; border-radius:2px; }
+  @keyframes fall { to { transform:translateY(110vh) rotate(720deg); opacity:.2 } }
+  /* tabs */
+  .tabbar { position:fixed; left:0; right:0; bottom:0; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:6px 0 calc(6px + env(safe-area-inset-bottom)); z-index:10; }
+  .tabbar button { font:inherit; font-weight:800; font-size:11.5px; color:var(--muted); background:none; border:0; display:grid; place-items:center; gap:2px; padding:4px 10px; cursor:pointer; } .tabbar button .i { font-size:22px; } .tabbar button.on { color:var(--green); }
+  /* avatar maker */
+  .maker { display:grid; grid-template-columns:140px 1fr; gap:14px; align-items:start; }
+  .maker .av { width:140px; height:186px; }
+  .opts { display:flex; flex-wrap:wrap; gap:7px; margin:4px 0 10px; }
+  .sw { width:30px; height:30px; border-radius:50%; border:2px solid var(--line); cursor:pointer; } .sw.on { border-color:var(--ink); box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--ink); }
+  .opt { font:inherit; font-weight:800; font-size:13px; padding:7px 10px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer; } .opt.on { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .opt.locked { opacity:.45; }
+  input.name { font:inherit; font-weight:800; font-size:16px; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; width:100%; background:var(--paper); color:var(--ink); }
+  /* buddies + cookbook */
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .badge { border:1px solid var(--line); border-radius:14px; padding:10px; background:var(--paper); font-size:12.5px; font-weight:700; display:flex; gap:8px; align-items:center; } .badge.off { opacity:.45; } .badge .big { font-size:24px; }
+  .badge small { display:block; font-weight:600; color:var(--muted); }
+  .recipe { border:1px solid var(--line); border-radius:14px; padding:12px 14px; background:var(--paper); margin-bottom:8px; } .recipe .n { font-weight:900; font-size:16px; } .recipe .m { color:var(--muted); font-size:13px; } .recipe ol { padding-left:20px; margin:8px 0 0; line-height:1.5; font-size:14px; } .recipe details summary { cursor:pointer; font-weight:800; margin-top:6px; font-size:13.5px; }
+  .shop { display:flex; flex-wrap:wrap; gap:6px; } .shop span { background:var(--paper); border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:13.5px; font-weight:700; cursor:pointer; } .shop span.done { opacity:.45; text-decoration:line-through; }
+  .note { color:var(--muted); font-size:13.5px; line-height:1.45; }
+  #start { position:fixed; inset:0; background:linear-gradient(#FBF7EC,#F4F1E8); z-index:40; overflow:auto; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #start { background:linear-gradient(#232220,#171615); } }
+  #start .in { max-width:520px; margin:0 auto; padding:calc(24px + env(safe-area-inset-top)) 18px 40px; }
+  #start h1 { font-size:30px; margin:0 0 4px; } #start p { color:var(--muted); margin:0 0 16px; line-height:1.45; }
+</style>
+
+<div id="start"><div class="in">
+  <h1>Make your chef</h1>
+  <p>This chef is you. Pick what you like; you can change it any time in the Closet.</p>
+  <div id="maker0"></div>
+  <button class="btn gold block" id="startBtn" style="margin-top:8px">Start cooking</button>
+</div></div>
+
+<div id="app">
+  <div class="view" id="view"></div>
+  <nav class="tabbar">
+    <button data-tab="play" class="on"><span class="i">🍽</span>Plate</button>
+    <button data-tab="team"><span class="i">🏅</span>Team</button>
+    <button data-tab="closet"><span class="i">🧢</span>Closet</button>
+    <button data-tab="grown"><span class="i">📖</span>Grown-ups</button>
+  </nav>
+</div>
+<div id="overlay"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const CHARACTERS = [
+  {id:"d",   name:"Sunny", nutrient:"Vitamin D",  sym:"D",  bg:"#FAEEDA", ink:"#633806", jersey:"#E0A93E",
+     does:"Helps your bones grow strong and keeps you feeling happy.", fact:"Your body makes Vitamin D when you play in the sun!"},
+  {id:"cal", name:"Cal",     nutrient:"Calcium",    sym:"Ca", bg:"#E6F1FB", ink:"#0C447C", jersey:"#4E97DD",
+     does:"Builds strong bones and healthy teeth.", fact:"Almost all your calcium lives in your bones and teeth!"},
+  {id:"c",   name:"Cece",  nutrient:"Vitamin C",  sym:"C",  bg:"#EAF3DE", ink:"#27500A", jersey:"#7DB33F",
+     does:"Helps cuts heal and fights off sniffles.", fact:"A bell pepper has more Vitamin C than an orange!"},
+  {id:"iron",name:"Ferris",    nutrient:"Iron",       sym:"Fe", bg:"#FAECE7", ink:"#712B13", jersey:"#D96B45",
+     does:"Carries oxygen in your blood so you have energy.", fact:"Iron helps make your blood red!"},
+  {id:"zinc",name:"Zenia",   nutrient:"Zinc",       sym:"Zn", bg:"#FBEAF0", ink:"#72243E", jersey:"#D75E8A",
+     does:"Helps you grow and fight germs.", fact:"Zinc helps your body heal scrapes!"},
+  {id:"mag", name:"Magnus",  nutrient:"Magnesium",  sym:"Mg", bg:"#E1F5EE", ink:"#085041", jersey:"#3BB58C",
+     does:"Helps muscles relax and gives steady energy.", fact:"Magnesium helps with 300+ jobs in your body!"},
+  {id:"a",   name:"Ava",     nutrient:"Vitamin A",  sym:"A",  bg:"#FDEBD9", ink:"#7A4409", jersey:"#E8963A",
+     does:"Helps you see well and keeps skin healthy.", fact:"Carrots really can help you see in the dark!"},
+  {id:"k",   name:"Kaye",     nutrient:"Vitamin K2", sym:"K2", bg:"#EEEDFE", ink:"#3C3489", jersey:"#8E86E0",
+     does:"Guides calcium to your bones.", fact:"Vitamin K helps cuts stop bleeding!"},
+  {id:"cop", name:"Cooper",    nutrient:"Copper",     sym:"Cu", bg:"#F4EBE0", ink:"#6B4423", jersey:"#B07B4F",
+     does:"Helps your body use iron.", fact:"A little copper helps colour your hair and skin!"},
+  {id:"e",   name:"Ella",   nutrient:"Vitamin E",  sym:"E",  bg:"#FBF3D9", ink:"#7A6516", jersey:"#D4B24A",
+     does:"Protects your cells like a shield.", fact:"Vitamin E teams up with Cece to protect you!"},
+];
+const RULES = {
+  cal_d:   {type:"buddy", verdict:"Best buddies!", kid:"Sunny helps your tummy soak up Cal, so your bones grow big and strong.", timing:"Enjoy together"},
+  c_iron:  {type:"buddy", verdict:"Best buddies!", kid:"Cece grabs Ferris from your food so you stay full of zoom and energy.", timing:"Enjoy together"},
+  d_mag:   {type:"buddy", verdict:"Best buddies!", kid:"Magnus gives Sunny a friendly wake-up nudge so he can get to work.", timing:"Enjoy together"},
+  cal_mag: {type:"buddy", verdict:"Good teammates!", kid:"Cal and Magnus work as a team for strong bones and calm muscles.", timing:"Enjoy together"},
+  a_zinc:  {type:"buddy", verdict:"Best buddies!", kid:"Zenia helps carry Ava around your body so she can help you see!", timing:"Enjoy together"},
+  a_iron:  {type:"buddy", verdict:"Best buddies!", kid:"Ava gives Ferris a helping hand so your blood stays strong.", timing:"Enjoy together"},
+  d_k:     {type:"buddy", verdict:"Best buddies!", kid:"Sunny lets calcium in, and Kaye shows it the way to your bones!", timing:"Enjoy together"},
+  cal_k:   {type:"buddy", verdict:"Best buddies!", kid:"Kaye is Cal's guide, taking him straight to your bones and teeth.", timing:"Enjoy together"},
+  cop_iron:{type:"buddy", verdict:"Best buddies!", kid:"Cooper is Ferris's sidekick, helping your body use iron the right way.", timing:"Enjoy together"},
+  c_e:     {type:"buddy", verdict:"Best buddies!", kid:"When Ella gets tired, Cece recharges her like a battery!", timing:"Enjoy together"},
+  cal_iron:{type:"space", verdict:"Need some space!", kid:"These two squeeze through the same little door. Give them about 2 hours apart.", timing:"About 2 hours apart"},
+  cal_zinc:{type:"space", verdict:"Need some space!", kid:"Cal and Zenia bump elbows, so give them a little gap.", timing:"A couple of hours apart"},
+  iron_zinc:{type:"space",verdict:"Need some space!", kid:"Ferris and Zenia race for the same spot and slow each other down.", timing:"A couple of hours apart"},
+  cop_zinc:{type:"space", verdict:"Need some space!", kid:"Zenia pushes past Cooper at the door, so give them a gap.", timing:"A couple of hours apart"},
+};
+const FOODS = [
+  {name:"Avocado", cat:"Vegetable", has:["mag","e"]},
+  {name:"Asparagus", cat:"Vegetable", has:["a","c","e"]},
+  {name:"Kale", cat:"Leafy green", has:["cal","c","a"]},
+  {name:"Spinach", cat:"Leafy green", has:["iron","mag","a","e"]},
+  {name:"Broccoli", cat:"Vegetable", has:["cal","c","a"]},
+  {name:"Cabbage", cat:"Leafy green", has:["c"]},
+  {name:"Cucumber", cat:"Vegetable", has:["c"]},
+  {name:"Celery", cat:"Vegetable", has:["c"]},
+  {name:"Zucchini", cat:"Vegetable", has:["c","a"]},
+  {name:"Eggplant", cat:"Vegetable", has:["mag","cop"]},
+  {name:"Bell peppers", cat:"Vegetable", has:["c","a"]},
+  {name:"Carrots", cat:"Vegetable", has:["a"]},
+  {name:"Beets", cat:"Vegetable", has:["iron","mag"]},
+  {name:"Radishes", cat:"Vegetable", has:["c"]},
+  {name:"Sweet potato", cat:"Vegetable", has:["a","c"]},
+  {name:"Pumpkin", cat:"Vegetable", has:["a"]},
+  {name:"Butternut squash", cat:"Vegetable", has:["a","c"]},
+  {name:"Tomatoes", cat:"Fruit", has:["c","a"]},
+  {name:"Lettuce", cat:"Leafy green", has:["a"]},
+  {name:"Arugula", cat:"Leafy green", has:["cal","a"]},
+  {name:"Green beans", cat:"Vegetable", has:["c"]},
+  {name:"Peas", cat:"Legume", has:["c","iron"]},
+  {name:"Brussels sprouts", cat:"Vegetable", has:["c","a"]},
+  {name:"Okra", cat:"Vegetable", has:["c","mag"]},
+  {name:"Apples", cat:"Fruit", has:["c"]},
+  {name:"Pears", cat:"Fruit", has:["c"]},
+  {name:"Peaches", cat:"Fruit", has:["c","a"]},
+  {name:"Apricots", cat:"Fruit", has:["a","c"]},
+  {name:"Cherries", cat:"Fruit", has:["c"]},
+  {name:"Plums", cat:"Fruit", has:["c"]},
+  {name:"Mango", cat:"Fruit", has:["c","a"]},
+  {name:"Papaya", cat:"Fruit", has:["c","a"]},
+  {name:"Pineapple", cat:"Fruit", has:["c"]},
+  {name:"Watermelon", cat:"Fruit", has:["c","a"]},
+  {name:"Cantaloupe", cat:"Fruit", has:["a","c"]},
+  {name:"Honeydew", cat:"Fruit", has:["c"]},
+  {name:"Strawberries", cat:"Berry", has:["c"]},
+  {name:"Blueberries", cat:"Berry", has:["c"]},
+  {name:"Raspberries", cat:"Berry", has:["c"]},
+  {name:"Blackberries", cat:"Berry", has:["c"]},
+  {name:"Lemon", cat:"Citrus", has:["c"]},
+  {name:"Lime", cat:"Citrus", has:["c"]},
+  {name:"Grapefruit", cat:"Citrus", has:["c"]},
+  {name:"Oranges", cat:"Citrus", has:["c"]},
+  {name:"Bananas", cat:"Fruit", has:["c","mag"]},
+  {name:"Figs", cat:"Fruit", has:["cal","mag"]},
+  {name:"Grapes", cat:"Fruit", has:["c"]},
+  {name:"Pomegranate", cat:"Fruit", has:["c"]},
+  {name:"Almonds", cat:"Nut", has:["mag","e","cal"]},
+  {name:"Brazil nuts", cat:"Nut", has:["mag","e","cop"]},
+  {name:"Chia seeds", cat:"Seed", has:["cal","mag","iron"]},
+  {name:"Flax seeds", cat:"Seed", has:["mag","cop"]},
+  {name:"Hemp seeds", cat:"Seed", has:["mag","iron"]},
+  {name:"Sesame seeds", cat:"Seed", has:["cal","cop","iron"]},
+  {name:"Pumpkin seeds", cat:"Seed", has:["iron","zinc","mag"]},
+  {name:"Sunflower seeds", cat:"Seed", has:["e","cop"]},
+  {name:"Olive oil", cat:"Oil", has:["e"]},
+  {name:"Seaweed", cat:"Sea vegetable", has:["iron","cal","a"]},
+  {name:"Kelp", cat:"Sea vegetable", has:["iron","cal"]},
+  {name:"Parsley", cat:"Herb", has:["c","a","iron"]},
+  {name:"Cilantro", cat:"Herb", has:["a","c"]},
+  {name:"Basil", cat:"Herb", has:["a"]},
+  {name:"Oregano", cat:"Herb", has:["iron","cal"]},
+  {name:"Thyme", cat:"Herb", has:["c","iron"]},
+  {name:"Rosemary", cat:"Herb", has:["a","iron"]},
+  {name:"Ginger root", cat:"Herb", has:["mag"]},
+  {name:"Turmeric", cat:"Herb", has:["iron"]},
+  {name:"Garlic", cat:"Vegetable", has:["c","cop"]},
+  {name:"Onions", cat:"Vegetable", has:["c"]},
+  {name:"Mushrooms", cat:"Vegetable", has:["d","cop"]},
+  {name:"Leeks", cat:"Vegetable", has:["a","c"]},
+  {name:"Turnips", cat:"Vegetable", has:["c"]},
+  {name:"Parsnips", cat:"Vegetable", has:["c"]},
+  {name:"Swiss chard", cat:"Leafy green", has:["a","iron","mag"]},
+  {name:"Collard greens", cat:"Leafy green", has:["cal","a"]},
+  {name:"Watercress", cat:"Leafy green", has:["a","c"]},
+  {name:"Endive", cat:"Leafy green", has:["a"]},
+  {name:"Brown rice", cat:"Grain", has:["mag"]},
+  {name:"White rice", cat:"Grain", has:["iron"]},
+  {name:"Oats", cat:"Grain", has:["zinc","mag","iron"]},
+  {name:"Steel cut oats", cat:"Grain", has:["zinc","mag","iron"]},
+  {name:"Barley", cat:"Grain", has:["mag","iron"]},
+  {name:"Farro", cat:"Grain", has:["iron","mag"]},
+  {name:"Quinoa", cat:"Grain", has:["mag","iron"]},
+  {name:"Bulgur", cat:"Grain", has:["mag","iron"]},
+  {name:"Couscous", cat:"Grain", has:["mag"]},
+  {name:"Whole wheat", cat:"Grain", has:["mag","iron"]},
+  {name:"Whole grain bread", cat:"Grain", has:["iron","mag"]},
+  {name:"Bagels", cat:"Grain", has:["iron"]},
+  {name:"Whole grain pasta", cat:"Grain", has:["iron","mag"]},
+  {name:"Noodles", cat:"Grain", has:["iron"]},
+  {name:"Corn", cat:"Vegetable", has:["mag"]},
+  {name:"Sweet corn", cat:"Vegetable", has:["c","mag"]},
+  {name:"White potatoes", cat:"Vegetable", has:["c"]},
+  {name:"Red potatoes", cat:"Vegetable", has:["c"]},
+  {name:"Chickpeas", cat:"Legume", has:["iron","zinc"]},
+  {name:"Lentils", cat:"Legume", has:["iron","mag"]},
+  {name:"Black beans", cat:"Legume", has:["iron","mag"]},
+  {name:"Kidney beans", cat:"Legume", has:["iron","mag"]},
+  {name:"Pinto beans", cat:"Legume", has:["iron","mag"]},
+  {name:"Navy beans", cat:"Legume", has:["iron","mag"]},
+  {name:"Cashews", cat:"Nut", has:["zinc","cop","mag"]},
+  {name:"Pistachios", cat:"Nut", has:["e","cop"]},
+  {name:"Walnuts", cat:"Nut", has:["cop","mag"]},
+  {name:"Pecans", cat:"Nut", has:["cop","e"]},
+  {name:"Tahini", cat:"Seed", has:["cal","cop","iron"]},
+  {name:"Eggs", cat:"Protein", has:["d","a","k"]},
+  {name:"Greek yogurt", cat:"Dairy", has:["cal","zinc"]},
+  {name:"Plain yogurt", cat:"Dairy", has:["cal","zinc"]},
+  {name:"Cottage cheese", cat:"Dairy", has:["cal"]},
+  {name:"Ricotta", cat:"Dairy", has:["cal"]},
+  {name:"Goat cheese", cat:"Dairy", has:["cal","k"]},
+  {name:"Feta cheese", cat:"Dairy", has:["cal","k"]},
+  {name:"Milk", cat:"Dairy", has:["cal","d"]},
+  {name:"Almond milk", cat:"Dairy", has:["cal","e"]},
+  {name:"Soy milk", cat:"Dairy", has:["cal"]},
+  {name:"Oat milk", cat:"Dairy", has:["cal"]},
+  {name:"Butter", cat:"Dairy", has:["a","k"]},
+  {name:"Ghee", cat:"Dairy", has:["a"]},
+  {name:"Salmon", cat:"Fish", has:["d"]},
+  {name:"Tuna", cat:"Fish", has:["d"]},
+  {name:"Sardines", cat:"Fish", has:["d","cal"]},
+  {name:"Mackerel", cat:"Fish", has:["d"]},
+  {name:"Chicken", cat:"Meat", has:["zinc","k"]},
+  {name:"Turkey", cat:"Meat", has:["zinc","iron"]},
+  {name:"Lean beef", cat:"Meat", has:["iron","zinc"]},
+  {name:"Lamb", cat:"Meat", has:["iron","zinc"]},
+  {name:"Avocado oil", cat:"Oil", has:["e"]},
+  {name:"Canola oil", cat:"Oil", has:["e"]},
+  {name:"Dark chocolate", cat:"Treat", has:["cop","mag","iron"]},
+  {name:"Cocoa", cat:"Treat", has:["cop","mag","iron"]},
+  {name:"Fruit juice", cat:"Drink", has:["c"]},
+  {name:"Smoothies", cat:"Drink", has:["c"]},
+  {name:"Granola", cat:"Grain", has:["iron","mag"]},
+  {name:"Muesli", cat:"Grain", has:["iron","mag"]},
+  {name:"Dried apricots", cat:"Dried fruit", has:["a","iron"]},
+  {name:"Raisins", cat:"Dried fruit", has:["iron"]},
+  {name:"Dried figs", cat:"Dried fruit", has:["cal","iron","mag"]},
+  {name:"Dates", cat:"Dried fruit", has:["mag","cop"]},
+  {name:"Coconut milk", cat:"Dairy", has:["iron","mag"]},
+  {name:"Cream", cat:"Dairy", has:["cal","a"]},
+];
+const RECIPES = [
+  {id:"r01", name:"Sunshine Breakfast Scramble", pair:["d","cal"], meal:"Breakfast", prep:10, serves:2,
+   why:"Eggs bring Sunny and cheese brings Cal — together they build strong bones!",
+   ingredients:["4 eggs","2 tbsp milk","Handful of grated cheese","A little butter","Pinch of salt"],
+   steps:["Crack the eggs into a bowl and add the milk.","Whisk until smooth.","Melt butter in a pan on low heat.","Pour in the eggs and stir gently.","Sprinkle in cheese and stir until fluffy."],
+   shopping:["Eggs","Milk","Cheese","Butter"],
+   parent:"Vitamin D from the yolks helps absorb calcium from the cheese and milk."},
+  {id:"r02", name:"Sardine Toast Boats", pair:["d","cal"], meal:"Lunch", prep:10, serves:2,
+   why:"Sardines are a double helper — they carry Sunny AND Cal all by themselves!",
+   ingredients:["1 tin sardines (drained)","2 slices whole grain bread","1 tbsp cream cheese","Squeeze of lemon","A few cucumber slices"],
+   steps:["Toast the bread until golden.","Spread on the cream cheese.","Lay the sardines on top and break them up gently with a fork.","Squeeze on a little lemon.","Add cucumber slices and cut into boats."],
+   shopping:["Sardines","Whole grain bread","Cream cheese","Lemon","Cucumber"],
+   parent:"Tinned sardines (with soft edible bones) provide both vitamin D and calcium in one food."},
+  {id:"r03", name:"Creamy Salmon Pasta", pair:["d","cal"], meal:"Dinner", prep:25, serves:4,
+   why:"Salmon brings Sunny and the creamy cheese sauce brings Cal — a bone-building dinner!",
+   ingredients:["2 cups pasta","1 small salmon fillet","Half cup milk","Handful of grated cheese","Handful of peas","Pinch of salt"],
+   steps:["Ask a grown-up to boil the pasta until soft.","Cook the salmon in a pan until it flakes apart.","Warm the milk in a pot and stir in the cheese until melted.","Add the peas to the sauce.","Mix the pasta, salmon and sauce together."],
+   shopping:["Pasta","Salmon","Milk","Cheese","Peas"],
+   parent:"Vitamin D from salmon supports absorption of calcium from the milk and cheese."},
+  {id:"r04", name:"Rainbow Pepper & Bean Wrap", pair:["c","iron"], meal:"Lunch", prep:15, serves:2,
+   why:"Bright peppers bring Cece, which helps your body grab iron from the beans!",
+   ingredients:["1 can black beans (drained)","1 red bell pepper (sliced)","1 yellow bell pepper (sliced)","2 tortilla wraps","A squeeze of lime"],
+   steps:["Warm the beans in a pan.","Slice the peppers into strips.","Lay the wraps flat and add beans and peppers.","Squeeze on a little lime.","Roll up tightly and cut in half."],
+   shopping:["Black beans","Red bell pepper","Yellow bell pepper","Tortilla wraps","Lime"],
+   parent:"Vitamin C in the peppers strongly boosts absorption of plant-based iron from the beans."},
+  {id:"r05", name:"Strawberry Spinach Salad", pair:["c","iron"], meal:"Lunch", prep:10, serves:2,
+   why:"Strawberries bring Cece right next to Ferris in the spinach — the perfect team!",
+   ingredients:["2 handfuls baby spinach","1 cup strawberries (sliced)","2 tbsp pumpkin seeds","Drizzle of olive oil","Squeeze of lemon"],
+   steps:["Wash the spinach and pat it dry.","Slice the strawberries.","Toss them together in a bowl.","Sprinkle over the pumpkin seeds.","Drizzle with oil and lemon and toss again."],
+   shopping:["Baby spinach","Strawberries","Pumpkin seeds","Olive oil","Lemon"],
+   parent:"Vitamin C from the strawberries and lemon helps the body absorb the iron in spinach and seeds."},
+  {id:"r06", name:"Lentil & Tomato Soup", pair:["c","iron"], meal:"Dinner", prep:30, serves:4,
+   why:"Tomatoes bring Cece and lentils bring Ferris — a cosy bowl full of energy!",
+   ingredients:["1 cup red lentils","1 can chopped tomatoes","1 carrot (chopped)","2 cups vegetable stock","Squeeze of lemon"],
+   steps:["Ask a grown-up to add the lentils, tomatoes, carrot and stock to a pot.","Bring to a gentle boil.","Simmer until the lentils are soft.","Stir well and squeeze in the lemon.","Let it cool a little before serving."],
+   shopping:["Red lentils","Chopped tomatoes","Carrot","Vegetable stock","Lemon"],
+   parent:"Vitamin C from tomatoes and lemon boosts absorption of the iron in lentils."},
+  {id:"r07", name:"Salmon & Spinach Rice Bowl", pair:["d","mag"], meal:"Dinner", prep:20, serves:2,
+   why:"Salmon brings Sunny and spinach brings Magnus for strong bones and calm energy!",
+   ingredients:["2 small salmon fillets","2 handfuls spinach","1 cup cooked rice","2 tbsp pumpkin seeds","Drizzle of olive oil"],
+   steps:["Ask a grown-up to heat a pan with a little oil.","Cook the salmon until it flakes.","Add the spinach for the last minute until soft.","Scoop rice into bowls.","Top with salmon, spinach and a sprinkle of pumpkin seeds."],
+   shopping:["Salmon","Spinach","Rice","Pumpkin seeds","Olive oil"],
+   parent:"Magnesium from spinach and seeds is needed to activate the vitamin D from salmon."},
+  {id:"r08", name:"Mushroom & Oat Risotto", pair:["d","mag"], meal:"Dinner", prep:30, serves:4,
+   why:"Mushrooms bring Sunny and oats bring Magnus — a creamy, cosy dinner!",
+   ingredients:["1 cup oats (steel cut)","2 cups sliced mushrooms","2 cups vegetable stock","Handful of grated cheese","Pinch of salt"],
+   steps:["Ask a grown-up to fry the mushrooms until golden.","Add the oats and stir for a minute.","Pour in the stock a little at a time, stirring.","Cook until creamy and soft.","Stir in the cheese and serve warm."],
+   shopping:["Steel cut oats","Mushrooms","Vegetable stock","Cheese"],
+   parent:"Sun-grown mushrooms provide vitamin D; oats bring magnesium, which helps activate it."},
+  {id:"r09", name:"Tuna & Avocado Sandwich", pair:["d","mag"], meal:"Lunch", prep:10, serves:2,
+   why:"Tuna brings Sunny and creamy avocado brings Magnus — lunchbox teamwork!",
+   ingredients:["1 tin tuna (drained)","1 ripe avocado","4 slices whole grain bread","Squeeze of lemon","Pinch of salt"],
+   steps:["Mash the avocado in a bowl with a fork.","Squeeze in the lemon and add a pinch of salt.","Stir in the tuna.","Spread onto two slices of bread.","Top with the other slices and cut in half."],
+   shopping:["Tuna","Avocado","Whole grain bread","Lemon"],
+   parent:"Vitamin D from tuna pairs with magnesium from avocado, which the body needs to use it."},
+  {id:"r10", name:"Creamy Almond Yogurt Bowl", pair:["cal","mag"], meal:"Breakfast", prep:5, serves:2,
+   why:"Yogurt brings Cal and almonds bring Magnus — teammates for bones and happy muscles!",
+   ingredients:["1 cup plain yogurt","2 tbsp sliced almonds","1 tbsp pumpkin seeds","1 banana (sliced)","Drizzle of honey"],
+   steps:["Spoon the yogurt into bowls.","Add the banana slices on top.","Sprinkle over the almonds and pumpkin seeds.","Drizzle with a little honey."],
+   shopping:["Yogurt","Almonds","Pumpkin seeds","Banana","Honey"],
+   parent:"Calcium from yogurt and magnesium from nuts and seeds support bones and muscles together. Check for nut allergies."},
+  {id:"r11", name:"Cheesy Black Bean Quesadilla", pair:["cal","mag"], meal:"Lunch", prep:15, serves:2,
+   why:"Cheese brings Cal and black beans bring Magnus — melty and mighty!",
+   ingredients:["1 can black beans (drained)","Handful of grated cheese","2 tortilla wraps","A little butter","Pinch of salt"],
+   steps:["Mash the beans lightly with a fork.","Spread them over one wrap and sprinkle on the cheese.","Top with the second wrap.","Ask a grown-up to cook it in a buttered pan until golden on both sides.","Cut into triangles."],
+   shopping:["Black beans","Cheese","Tortilla wraps","Butter"],
+   parent:"Calcium from cheese and magnesium from black beans work together for bones and muscles."},
+  {id:"r12", name:"Fig & Almond Milk Smoothie", pair:["cal","mag"], meal:"Snack", prep:5, serves:2,
+   why:"Figs and almond milk carry both Cal and Magnus — a sweet double team!",
+   ingredients:["4 dried figs (soaked)","1 cup almond milk","1 banana","2 tbsp plain yogurt","A few ice cubes"],
+   steps:["Soak the figs in warm water for a few minutes.","Add everything to a blender.","Put the lid on tightly.","Ask a grown-up to blend until smooth.","Pour into cups and enjoy cold."],
+   shopping:["Dried figs","Almond milk","Banana","Yogurt"],
+   parent:"Figs and fortified almond milk both provide calcium and magnesium. Check for nut allergies."},
+  {id:"r13", name:"Carrot & Chickpea Hummus Dippers", pair:["a","zinc"], meal:"Snack", prep:10, serves:4,
+   why:"Carrots bring Ava and chickpea hummus brings Zenia, who helps your body use Ava!",
+   ingredients:["3 carrots (cut into sticks)","1 can chickpeas (drained)","1 tbsp olive oil","Squeeze of lemon","Pinch of salt"],
+   steps:["Cut the carrots into sticks.","Add chickpeas, oil, lemon and salt to a blender.","Ask a grown-up to blend until smooth.","Scoop into a bowl.","Dip the carrot sticks and enjoy!"],
+   shopping:["Carrots","Chickpeas","Olive oil","Lemon"],
+   parent:"Vitamin A from carrots teams with zinc from chickpeas, which helps the body transport vitamin A."},
+  {id:"r14", name:"Sweet Potato & Turkey Chili", pair:["a","zinc"], meal:"Dinner", prep:30, serves:4,
+   why:"Sweet potato brings Ava and turkey brings Zenia — a warm bowl of teamwork!",
+   ingredients:["1 sweet potato (cubed)","1 cup minced turkey","1 can chopped tomatoes","1 can kidney beans (drained)","Pinch of salt"],
+   steps:["Ask a grown-up to brown the turkey in a pot.","Add the sweet potato, tomatoes and beans.","Stir well and bring to a gentle simmer.","Cook until the sweet potato is soft.","Let it cool a little before serving."],
+   shopping:["Sweet potato","Minced turkey","Chopped tomatoes","Kidney beans"],
+   parent:"Zinc from turkey helps the body transport and use the vitamin A from sweet potato."},
+  {id:"r15", name:"Pumpkin Seed Sweet Potato Toast", pair:["a","zinc"], meal:"Snack", prep:15, serves:2,
+   why:"Sweet potato brings Ava and pumpkin seeds bring Zenia — crunchy and orange!",
+   ingredients:["1 large sweet potato","2 tbsp pumpkin seeds","1 tbsp cream cheese","Drizzle of olive oil","Pinch of salt"],
+   steps:["Ask a grown-up to slice the sweet potato into thick rounds.","Toast or bake the rounds until soft.","Spread on a little cream cheese.","Sprinkle over the pumpkin seeds.","Add a pinch of salt and enjoy."],
+   shopping:["Sweet potato","Pumpkin seeds","Cream cheese","Olive oil"],
+   parent:"Vitamin A from sweet potato pairs with zinc from pumpkin seeds, which helps the body use it."},
+  {id:"r16", name:"Lentil & Sweet Potato Stew", pair:["a","iron"], meal:"Dinner", prep:30, serves:4,
+   why:"Lentils bring Ferris and sweet potato brings Ava, who helps your blood stay strong!",
+   ingredients:["1 cup red lentils","1 sweet potato (cubed)","1 carrot (chopped)","2 cups vegetable stock","Pinch of salt"],
+   steps:["Ask a grown-up to add everything to a pot.","Bring to a gentle boil.","Simmer until the lentils and sweet potato are soft.","Stir well.","Let it cool a little before serving."],
+   shopping:["Red lentils","Sweet potato","Carrot","Vegetable stock"],
+   parent:"Iron from lentils pairs with vitamin A from sweet potato and carrot, which supports iron use."},
+  {id:"r17", name:"Spinach & Apricot Couscous", pair:["a","iron"], meal:"Lunch", prep:15, serves:2,
+   why:"Spinach and dried apricots both carry Ava and Ferris — a double-double team!",
+   ingredients:["1 cup couscous","2 handfuls spinach","6 dried apricots (chopped)","1 cup hot vegetable stock","Drizzle of olive oil"],
+   steps:["Put the couscous in a bowl.","Ask a grown-up to pour over the hot stock, then cover for 5 minutes.","Fluff it up with a fork.","Stir through the spinach until it wilts.","Add the apricots and a drizzle of oil."],
+   shopping:["Couscous","Spinach","Dried apricots","Vegetable stock","Olive oil"],
+   parent:"Spinach and dried apricots each provide both iron and vitamin A, which supports iron use."},
+  {id:"r18", name:"Beef & Carrot Skillet", pair:["a","iron"], meal:"Dinner", prep:25, serves:4,
+   why:"Beef brings Ferris and carrots bring Ava — a hearty pan of helpers!",
+   ingredients:["1 cup minced lean beef","2 carrots (sliced)","1 cup cooked rice","1 tbsp tomato paste","Pinch of salt"],
+   steps:["Ask a grown-up to brown the beef in a pan.","Add the sliced carrots and cook until soft.","Stir in the tomato paste.","Add the cooked rice and mix well.","Season lightly and serve warm."],
+   shopping:["Minced lean beef","Carrots","Rice","Tomato paste"],
+   parent:"Iron from beef is easily absorbed, and vitamin A from carrots helps the body mobilize iron."},
+  {id:"r19", name:"Cheesy Egg Muffins", pair:["d","k"], meal:"Breakfast", prep:25, serves:6,
+   why:"Eggs bring Sunny and cheese brings Kaye, who guides calcium to your bones!",
+   ingredients:["6 eggs","Half cup grated cheese","Splash of milk","Chopped veggies (optional)","Pinch of salt"],
+   steps:["Ask a grown-up to heat the oven to 375F (190C).","Whisk the eggs, milk and salt.","Stir in the cheese and veggies.","Pour into a greased muffin tray.","Bake until set and golden."],
+   shopping:["Eggs","Cheese","Milk","Muffin tray"],
+   parent:"Vitamin D from eggs and vitamin K2 from cheese and yolks work as a bone-building team."},
+  {id:"r20", name:"Mushroom & Chicken Skewers", pair:["d","k"], meal:"Dinner", prep:25, serves:4,
+   why:"Mushrooms bring Sunny and chicken brings Kaye — dinner on a stick!",
+   ingredients:["1 cup mushrooms (whole)","2 chicken breasts (cubed)","1 bell pepper (chunked)","Drizzle of olive oil","Pinch of salt"],
+   steps:["Ask a grown-up to help thread the chicken, mushrooms and pepper onto skewers.","Brush with a little oil and salt.","Grill or bake, turning once, until the chicken is cooked through.","Let them cool a little.","Slide everything off the skewer before eating."],
+   shopping:["Mushrooms","Chicken breasts","Bell pepper","Olive oil","Skewers"],
+   parent:"Sun-grown mushrooms provide vitamin D; chicken provides vitamin K2."},
+  {id:"r21", name:"Egg & Butter Soldiers", pair:["d","k"], meal:"Breakfast", prep:10, serves:2,
+   why:"Eggs carry both Sunny and Kaye, and buttery toast brings even more Kaye!",
+   ingredients:["2 eggs","2 slices whole grain bread","A little butter","Pinch of salt"],
+   steps:["Ask a grown-up to boil the eggs for about 5 minutes for a runny yolk.","Toast the bread and spread with butter.","Cut the toast into long strips (soldiers).","Pop the top off each egg.","Dip the soldiers into the yolk!"],
+   shopping:["Eggs","Whole grain bread","Butter"],
+   parent:"Egg yolks provide both vitamin D and vitamin K2; butter adds a little more K2."},
+  {id:"r22", name:"Cheesy Broccoli Trees", pair:["cal","k"], meal:"Dinner", prep:20, serves:4,
+   why:"Cheese carries both Cal and Kaye, so the calcium heads straight to your bones!",
+   ingredients:["1 head broccoli (in florets)","Half cup grated cheese","Drizzle of olive oil","Pinch of salt"],
+   steps:["Ask a grown-up to heat the oven to 400F (200C).","Toss the broccoli with oil and salt on a tray.","Roast until tender.","Sprinkle the cheese on top.","Return to the oven until the cheese melts."],
+   shopping:["Broccoli","Cheese","Olive oil"],
+   parent:"Cheese provides both calcium and vitamin K2, which helps steer calcium into bones."},
+  {id:"r23", name:"Goat Cheese & Collard Wraps", pair:["cal","k"], meal:"Lunch", prep:15, serves:2,
+   why:"Collard greens bring Cal and goat cheese brings both Cal and Kaye!",
+   ingredients:["4 large collard green leaves","Half cup goat cheese","1 carrot (grated)","Half cucumber (sliced)","Squeeze of lemon"],
+   steps:["Wash the collard leaves and pat them dry.","Ask a grown-up to trim the thick stems.","Spread goat cheese down the middle of each leaf.","Add the grated carrot and cucumber.","Roll up tightly and cut in half."],
+   shopping:["Collard greens","Goat cheese","Carrot","Cucumber","Lemon"],
+   parent:"Collard greens and goat cheese both provide calcium; the cheese also provides vitamin K2."},
+  {id:"r24", name:"Feta & Cucumber Crunch", pair:["cal","k"], meal:"Snack", prep:10, serves:2,
+   why:"Feta is a double helper — it carries Cal AND Kaye in one crumbly cube!",
+   ingredients:["Half cup feta cheese (cubed)","1 cucumber (chopped)","Handful of cherry tomatoes","Drizzle of olive oil","Pinch of oregano"],
+   steps:["Chop the cucumber into chunks.","Halve the cherry tomatoes.","Add the feta cubes to a bowl with the veggies.","Drizzle with olive oil.","Sprinkle over the oregano and toss gently."],
+   shopping:["Feta cheese","Cucumber","Cherry tomatoes","Olive oil","Oregano"],
+   parent:"Feta provides calcium along with vitamin K2, which helps direct calcium into bone."},
+  {id:"r25", name:"Choco-Oat Energy Balls", pair:["cop","iron"], meal:"Snack", prep:15, serves:6,
+   why:"Oats bring Ferris and dark chocolate brings Cooper, who helps your body use iron!",
+   ingredients:["1 cup oats","Half cup peanut butter","3 tbsp honey","2 tbsp dark chocolate chips","2 tbsp chopped cashews"],
+   steps:["Mix the oats, peanut butter and honey in a bowl.","Stir in the chocolate chips and cashews.","Roll into small balls with clean hands.","Chill in the fridge for 30 minutes."],
+   shopping:["Oats","Peanut butter","Honey","Dark chocolate chips","Cashews"],
+   parent:"Iron from oats teams with copper from dark chocolate and cashews. Check for nut allergies."},
+  {id:"r26", name:"Cashew & Lentil Curry", pair:["cop","iron"], meal:"Dinner", prep:30, serves:4,
+   why:"Lentils bring Ferris and cashews bring Cooper — a creamy, cosy dinner duo!",
+   ingredients:["1 cup red lentils","Half cup cashews","1 can coconut milk","1 tsp mild curry powder","1 cup vegetable stock"],
+   steps:["Ask a grown-up to add the lentils and stock to a pot.","Simmer until the lentils soften.","Stir in the coconut milk and curry powder.","Add the cashews and cook a few minutes more.","Serve warm with rice."],
+   shopping:["Red lentils","Cashews","Coconut milk","Curry powder","Vegetable stock"],
+   parent:"Copper from cashews helps the body properly use the iron from lentils. Check for nut allergies."},
+  {id:"r27", name:"Sesame Beef Noodles", pair:["cop","iron"], meal:"Dinner", prep:25, serves:4,
+   why:"Beef brings Ferris and sesame seeds bring Cooper — slurpy noodle teamwork!",
+   ingredients:["1 cup minced lean beef","2 tbsp sesame seeds","2 cups cooked noodles","1 bell pepper (sliced)","1 tbsp soy sauce"],
+   steps:["Ask a grown-up to brown the beef in a pan.","Add the sliced pepper and cook until soft.","Toss in the cooked noodles.","Add the soy sauce and stir well.","Sprinkle the sesame seeds over the top."],
+   shopping:["Minced lean beef","Sesame seeds","Noodles","Bell pepper","Soy sauce"],
+   parent:"Sesame seeds provide copper, which the body needs to use the iron from beef."},
+  {id:"r28", name:"Berry & Almond Yogurt Parfait", pair:["c","e"], meal:"Snack", prep:10, serves:2,
+   why:"Berries bring Cece and almonds bring Ella — Cece recharges Ella like a battery!",
+   ingredients:["1 cup yogurt","Half cup strawberries (sliced)","1 kiwi (sliced)","2 tbsp sliced almonds","Drizzle of honey"],
+   steps:["Spoon a layer of yogurt into a clear cup.","Add a layer of berries and kiwi.","Repeat the layers.","Top with almonds and a drizzle of honey."],
+   shopping:["Yogurt","Strawberries","Kiwi","Almonds","Honey"],
+   parent:"Vitamin C from the berries recharges vitamin E from the almonds. Check for nut allergies."},
+  {id:"r29", name:"Avocado & Orange Salad", pair:["c","e"], meal:"Lunch", prep:10, serves:2,
+   why:"Oranges bring Cece and creamy avocado brings Ella — sunshine in a bowl!",
+   ingredients:["1 ripe avocado (sliced)","2 oranges (peeled and sliced)","2 handfuls lettuce","Drizzle of olive oil","Pinch of salt"],
+   steps:["Peel and slice the oranges into rounds.","Slice the avocado.","Lay the lettuce on a plate.","Arrange the orange and avocado on top.","Drizzle with oil and add a pinch of salt."],
+   shopping:["Avocado","Oranges","Lettuce","Olive oil"],
+   parent:"Vitamin C from oranges helps regenerate vitamin E from avocado and olive oil."},
+  {id:"r30", name:"Sunflower Broccoli Crunch", pair:["c","e"], meal:"Snack", prep:10, serves:2,
+   why:"Broccoli brings Cece and sunflower seeds bring Ella — crunchy little trees!",
+   ingredients:["1 head broccoli (small florets)","2 tbsp sunflower seeds","2 tbsp plain yogurt","Squeeze of lemon","Pinch of salt"],
+   steps:["Chop the broccoli into small florets.","Mix the yogurt, lemon and salt to make a dip.","Toast the sunflower seeds in a dry pan for a minute.","Toss the broccoli with the seeds.","Serve with the dip on the side."],
+   shopping:["Broccoli","Sunflower seeds","Yogurt","Lemon"],
+   parent:"Vitamin C from broccoli and lemon recharges vitamin E from the sunflower seeds."},
+  {id:"r31", name:"Berry Oat Porridge", pair:["c","iron"], meal:"Breakfast", prep:10, serves:2,
+   why:"Oats bring Ferris and the berries on top bring Cece to help him along!",
+   ingredients:["1 cup oats","2 cups milk","Half cup mixed berries","1 tbsp honey","Pinch of salt"],
+   steps:["Ask a grown-up to warm the oats and milk in a pot.","Stir gently until thick and creamy.","Spoon into bowls.","Pile the berries on top.","Drizzle with a little honey."],
+   shopping:["Oats","Milk","Mixed berries","Honey"],
+   parent:"Vitamin C from the berries helps the body absorb the iron in the oats."},
+  {id:"r32", name:"Fig & Oat Porridge", pair:["cal","mag"], meal:"Breakfast", prep:10, serves:2,
+   why:"Figs carry both Cal and Magnus, and the oats bring even more Magnus!",
+   ingredients:["1 cup oats","2 cups milk","4 dried figs (chopped)","1 tbsp sliced almonds","Pinch of cinnamon"],
+   steps:["Chop the figs into small pieces.","Ask a grown-up to warm the oats and milk in a pot.","Stir in the figs and cook until creamy.","Spoon into bowls.","Top with almonds and a pinch of cinnamon."],
+   shopping:["Oats","Milk","Dried figs","Almonds","Cinnamon"],
+   parent:"Figs and milk provide calcium; figs, oats and almonds provide magnesium. Check for nut allergies."},
+  {id:"r33", name:"Sweet Potato Breakfast Hash", pair:["a","zinc"], meal:"Breakfast", prep:20, serves:4,
+   why:"Sweet potato brings Ava and pumpkin seeds bring Zenia — a sunny start!",
+   ingredients:["1 sweet potato (small cubes)","2 tbsp pumpkin seeds","1 bell pepper (chopped)","Drizzle of olive oil","Pinch of salt"],
+   steps:["Ask a grown-up to heat a pan with a little oil.","Add the sweet potato cubes and cook until soft.","Stir in the chopped pepper.","Cook a few minutes more until everything is tender.","Sprinkle the pumpkin seeds over the top."],
+   shopping:["Sweet potato","Pumpkin seeds","Bell pepper","Olive oil"],
+   parent:"Zinc from pumpkin seeds helps the body transport the vitamin A from sweet potato."},
+  {id:"r34", name:"Spinach & Mushroom Omelette", pair:["d","mag"], meal:"Breakfast", prep:15, serves:2,
+   why:"Mushrooms bring Sunny and spinach brings Magnus to wake him up!",
+   ingredients:["3 eggs","1 cup sliced mushrooms","2 handfuls spinach","A little butter","Pinch of salt"],
+   steps:["Whisk the eggs in a bowl with a pinch of salt.","Ask a grown-up to fry the mushrooms in butter until golden.","Add the spinach and stir until it wilts.","Pour the eggs over the top.","Cook until set, then fold in half and slide onto a plate."],
+   shopping:["Eggs","Mushrooms","Spinach","Butter"],
+   parent:"Vitamin D from mushrooms and eggs pairs with magnesium from spinach, which activates it."},
+];
+const RECIPE_EMOJI = {
+  "r01":"🍳","r02":"🐟","r03":"🍝","r04":"🌯","r05":"🥗","r06":"🍲",
+  "r07":"🍚","r08":"🍄","r09":"🥪","r10":"🥣","r11":"🫔","r12":"🥤",
+  "r13":"🥕","r14":"🌶","r15":"🍠","r16":"🥘","r17":"🍋","r18":"🥩",
+  "r19":"🧁","r20":"🍗","r21":"🍞","r22":"🥦","r23":"🥗","r24":"🧀",
+  "r25":"🍫","r26":"🍛","r27":"🍜","r28":"🍓","r29":"🥑","r30":"🥦",
+  "r31":"🫐","r32":"🍑","r33":"🍠","r34":"🍳",
+};
+const CH = Object.fromEntries(CHARACTERS.map(c => [c.id, c]));
+const BUDDY_KEYS = Object.keys(RULES).filter(k => RULES[k].type === "buddy");
+const SPACE_KEYS = Object.keys(RULES).filter(k => RULES[k].type === "space");
+const ruleKey = (a,b)=>[a,b].sort().join("_");
+const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
+const esc = s=>String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- the deck: foods from data.js that have a clear picture ---------- */
+const FOOD_EMOJI = { "Avocado":"🥑","Kale":"🥬","Spinach":"🍃","Broccoli":"🥦","Cucumber":"🥒","Bell peppers":"🫑","Carrots":"🥕","Sweet potato":"🍠","Tomatoes":"🍅","Peas":"🫛","Apples":"🍎","Peaches":"🍑","Cherries":"🍒","Mango":"🥭","Pineapple":"🍍","Watermelon":"🍉","Strawberries":"🍓","Blueberries":"🫐","Lemon":"🍋","Oranges":"🍊","Bananas":"🍌","Grapes":"🍇","Pears":"🍐","Honeydew":"🍈","Almonds":"🌰","Sunflower seeds":"🌻","Olive oil":"🫒","Mushrooms":"🍄","Garlic":"🧄","Onions":"🧅","Brown rice":"🍚","Oats":"🥣","Whole grain bread":"🍞","Corn":"🌽","White potatoes":"🥔","Chickpeas":"🫘","Kidney beans":"🫘","Eggs":"🥚","Milk":"🥛","Feta cheese":"🧀","Butter":"🧈","Salmon":"🐟","Tuna":"🍣","Sardines":"🐠","Chicken":"🍗","Turkey":"🦃","Lean beef":"🥩","Dark chocolate":"🍫","Cashews":"🥜","Pumpkin seeds":"🎃","Coconut milk":"🥥","Greek yogurt":"🍶" };
+const DECK = FOODS.filter(f=>FOOD_EMOJI[f.name]).map(f=>({ name:f.name, e:FOOD_EMOJI[f.name], has:f.has }));
+
+/* ---------- progress ---------- */
+const K = { discovered:"vv-discovered", cooked:"vvv-cooked", avatar:"vv-avatar", space:"vv-space", plates:"vv-plates", gear:"vv-gear", team:"vv-team", shop:"vv-shop-done" };
+const get = (k,d)=>{ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){ return d; } };
+const put = (k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+const discovered = new Set(get(K.discovered, [])), spaceLearned = new Set(get(K.space, [])), cooked = new Set(get(K.cooked, []));
+let plates = get(K.plates, []);           // foods from completed plates (shopping list for grown-ups)
+let gear = new Set(get(K.gear, []));       // unlocked wearables
+let avatar = get(K.avatar, null);
+let team = get(K.team, { captain:null, members:[] });   // the kid's team: captain + up to 3 teammates, all buddies they have met
+let shopDone = new Set(get(K.shop, []));
+function saveAll(){ put(K.discovered,[...discovered]); put(K.space,[...spaceLearned]); put(K.cooked,[...cooked]); put(K.plates,plates.slice(-60)); put(K.gear,[...gear]); put(K.avatar,avatar); put(K.team,team); put(K.shop,[...shopDone]); }
+
+/* ---------- avatar: layered SVG parts ---------- */
+const SKIN = ["#F6DFC4","#E8C39E","#D4A074","#B9794F","#8D5A3A","#5B3A27"];
+const HAIRC = ["#2B2A28","#5B3A27","#A8683D","#E0B55C","#C9603E","#7A5C9E"];
+const SHIRT = ["#4E97DD","#7DB33F","#E0A93E","#D75E8A","#3BB58C","#D96B45","#7A5C9E","#2B2A28"];
+const HAIR = { none:"None", short:"Short", curly:"Curly", long:"Long", bun:"Bun", spiky:"Spiky" };
+const EYES = { dot:"Dots", happy:"Happy", wink:"Wink" };
+const HATS = { none:"None", cap:"Cap", beanie:"Beanie", chef:"Chef hat" };
+const GLASSES = { none:"None", round:"Round", square:"Square" };
+// wearables earned from buddy pairs: unlocked when that pair is found
+const GEAR = [
+  { id:"sunnies", name:"Sunny's sunglasses", by:"cal_d",   icon:"🕶" },
+  { id:"headband", name:"Ferris's headband",      by:"c_iron",  icon:"🎽" },
+  { id:"flower",  name:"Ava's flower",          by:"a_zinc",  icon:"🌸" },
+  { id:"scarf",   name:"Magnus's scarf",        by:"d_mag",   icon:"🧣" },
+  { id:"apron",   name:"Kaye's apron",           by:"cal_k",   icon:"🥼" },
+  { id:"crown",   name:"Village crown",         by:"all",     icon:"👑" },
+];
+const DEFAULT_AV = { name:"", skin:0, hair:"short", hairc:0, eyes:"dot", glasses:"none", hat:"none", shirt:0, wear:[] };
+function avatarSVG(a, w){
+  a = { ...DEFAULT_AV, ...(a||{}) }; const cap = team.captain ? CH[team.captain] : null; const skin=SKIN[a.skin], hc=HAIRC[a.hairc], sh = cap ? cap.jersey : SHIRT[a.shirt]; const has = g=>a.wear.includes(g);
+  const teamKit = cap ? `<text x="45" y="63" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="${cap.nutrient.length>9?6.2:7.2}" letter-spacing=".6" fill="#fff" opacity=".95">${cap.nutrient.toUpperCase()}</text><text x="45" y="86" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="${cap.sym.length>1?20:24}" fill="#fff">${cap.sym}</text>${a.name?`<rect x="27" y="92" width="36" height="12" rx="6" fill="#fff" opacity=".95"/><text x="45" y="98.5" text-anchor="middle" dominant-baseline="central" font-family="Nunito,sans-serif" font-weight="900" font-size="${a.name.length>7?6:7.2}" fill="${cap.ink}">${esc(a.name.toUpperCase())}</text>`:""}` : "";
+  const hairBack = { long:`<path d="M24,34 Q45,-2 66,34 L68,70 Q45,78 22,70 Z" fill="${hc}"/>`, bun:`<circle cx="45" cy="8" r="9" fill="${hc}"/>` }[a.hair]||"";
+  const hairFront = { short:`<path d="M27,28 Q30,8 45,8 Q60,8 63,28 Q55,18 45,20 Q35,18 27,28 Z" fill="${hc}"/>`, curly:`<circle cx="30" cy="16" r="8" fill="${hc}"/><circle cx="45" cy="9" r="9" fill="${hc}"/><circle cx="60" cy="16" r="8" fill="${hc}"/><circle cx="37" cy="10" r="7" fill="${hc}"/><circle cx="53" cy="10" r="7" fill="${hc}"/>`, long:`<path d="M27,28 Q30,8 45,8 Q60,8 63,28 Q55,16 45,18 Q35,16 27,28 Z" fill="${hc}"/>`, bun:`<path d="M27,26 Q30,10 45,10 Q60,10 63,26 Q55,18 45,19 Q35,18 27,26 Z" fill="${hc}"/>`, spiky:`<path d="M26,26 L30,8 L37,20 L42,4 L48,20 L54,6 L58,20 L64,26 Q45,16 26,26 Z" fill="${hc}"/>` }[a.hair]||"";
+  const eyes = { dot:`<circle cx="39" cy="27" r="2.4" fill="#2B2A28"/><circle cx="51" cy="27" r="2.4" fill="#2B2A28"/>`, happy:`<path d="M35,28 Q39,23 43,28" stroke="#2B2A28" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M47,28 Q51,23 55,28" stroke="#2B2A28" stroke-width="2.2" fill="none" stroke-linecap="round"/>`, wink:`<circle cx="39" cy="27" r="2.4" fill="#2B2A28"/><path d="M47,27 Q51,30 55,27" stroke="#2B2A28" stroke-width="2.2" fill="none" stroke-linecap="round"/>` }[a.eyes];
+  const glasses = { round:`<circle cx="39" cy="27" r="6" fill="none" stroke="#2B2A28" stroke-width="1.8"/><circle cx="51" cy="27" r="6" fill="none" stroke="#2B2A28" stroke-width="1.8"/><path d="M45,27 h0" stroke="#2B2A28" stroke-width="1.8"/>`, square:`<rect x="32" y="22" width="12" height="10" rx="2" fill="none" stroke="#2B2A28" stroke-width="1.8"/><rect x="46" y="22" width="12" height="10" rx="2" fill="none" stroke="#2B2A28" stroke-width="1.8"/>` }[a.glasses]||"";
+  const sunnies = has("sunnies") ? `<rect x="31" y="22" width="13" height="9" rx="4" fill="#2B2A28"/><rect x="46" y="22" width="13" height="9" rx="4" fill="#2B2A28"/><path d="M44,26 h2" stroke="#2B2A28" stroke-width="2"/>` : "";
+  const hat = { cap:`<path d="M26,22 Q45,2 64,22 L64,25 L26,25 Z" fill="${sh}"/><path d="M60,24 L74,26 L60,29 Z" fill="${sh}"/>`, beanie:`<path d="M26,24 Q45,0 64,24 Z" fill="#D75E8A"/><rect x="25" y="21" width="40" height="7" rx="3" fill="#B84A72"/><circle cx="45" cy="4" r="4" fill="#F6DFC4"/>`, chef:`<path d="M28,24 L28,10 Q28,0 40,2 Q45,-6 50,2 Q62,0 62,10 L62,24 Z" fill="#fff" stroke="#E6E1D6"/><rect x="27" y="20" width="36" height="6" fill="#fff" stroke="#E6E1D6"/>` }[a.hat]||"";
+  const headband = has("headband") ? `<rect x="27" y="14" width="36" height="5" rx="2" fill="#D96B45"/>` : "";
+  const flower = has("flower") ? `<circle cx="62" cy="14" r="5" fill="#E58AA0"/><circle cx="62" cy="14" r="2" fill="#FFE08A"/>` : "";
+  const scarf = has("scarf") ? `<path d="M30,48 Q45,56 60,48 L60,54 Q45,62 30,54 Z" fill="#3BB58C"/>` : "";
+  const apron = has("apron") ? `<path d="M34,62 L56,62 L58,104 L32,104 Z" fill="#fff" opacity=".9"/><path d="M37,62 L37,52 L53,52 L53,62" fill="none" stroke="#fff" stroke-width="3"/>` : "";
+  const crown = has("crown") ? `<path d="M30,12 L36,2 L42,10 L45,0 L48,10 L54,2 L60,12 Z" fill="#E0A93E"/>` : "";
+  return `<svg viewBox="0 0 90 120" width="${w}" height="${Math.round(w*120/90)}"><ellipse cx="45" cy="116" rx="26" ry="5" fill="rgba(0,0,0,.12)"/>
+    ${hairBack}
+    <rect x="33" y="100" width="9" height="16" rx="3" fill="#3a3a38"/><rect x="48" y="100" width="9" height="16" rx="3" fill="#3a3a38"/>
+    <ellipse cx="18" cy="63" rx="9" ry="11" fill="${sh}"/><ellipse cx="72" cy="63" rx="9" ry="11" fill="${sh}"/>
+    <path d="M23,50 Q45,43 67,50 L63,106 Q63,110 59,110 L31,110 Q27,110 27,106 Z" fill="${sh}"/>
+    ${teamKit}${apron}${scarf}
+    <circle cx="45" cy="27" r="17" fill="${skin}"/>
+    <circle cx="34" cy="32" r="2.4" fill="rgba(229,138,160,.45)"/><circle cx="56" cy="32" r="2.4" fill="rgba(229,138,160,.45)"/>
+    ${eyes}<path d="M39,34 Q45,39 51,34" stroke="#2B2A28" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${glasses}${sunnies}${hairFront}${headband}${flower}${hat}${crown}
+  </svg>`;
+}
+function buddySVG(c, w){ const two=c.sym.length>1; return `<svg viewBox="0 0 90 120" width="${w}" height="${Math.round(w*120/90)}"><ellipse cx="45" cy="116" rx="26" ry="5" fill="rgba(0,0,0,.12)"/><rect x="33" y="100" width="9" height="16" rx="3" fill="#3a3a38"/><rect x="48" y="100" width="9" height="16" rx="3" fill="#3a3a38"/><ellipse cx="18" cy="61" rx="9" ry="11" fill="${c.jersey}"/><ellipse cx="72" cy="61" rx="9" ry="11" fill="${c.jersey}"/><path d="M23,50 Q45,43 67,50 L63,106 Q63,110 59,110 L31,110 Q27,110 27,106 Z" fill="${c.jersey}"/><path d="M37,48 Q45,55 53,48 Q52,52 45,53 Q38,52 37,48 Z" fill="#fff" opacity=".9"/><text x="45" y="63" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="${c.nutrient.length>9?6.2:7.2}" letter-spacing=".6" fill="#fff" opacity=".95">${c.nutrient.toUpperCase()}</text><text x="45" y="86" text-anchor="middle" font-family="Nunito,sans-serif" font-weight="900" font-size="${two?20:24}" fill="#fff">${c.sym}</text><rect x="29" y="92" width="32" height="12" rx="6" fill="#fff" opacity=".95"/><text x="45" y="98.5" text-anchor="middle" dominant-baseline="central" font-family="Nunito,sans-serif" font-weight="900" font-size="${c.name.length>5?6.6:7.6}" fill="${c.ink}">${c.name.toUpperCase()}</text><circle cx="45" cy="26" r="17" fill="#F6DFC4"/><circle cx="34" cy="31" r="2.4" fill="rgba(229,138,160,.45)"/><circle cx="56" cy="31" r="2.4" fill="rgba(229,138,160,.45)"/><circle cx="39" cy="25" r="2.3" fill="#3a3a38"/><circle cx="51" cy="25" r="2.3" fill="#3a3a38"/><path d="M39,32 Q45,37 51,32" stroke="#3a3a38" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`; }
+const chip = id => { const c=CH[id]; return `<span class="b" style="background:${c.bg};color:${c.ink}" title="${c.name}">${c.sym}</span>`; };
+
+/* ---------- avatar maker (shared by first launch and the Closet) ---------- */
+function maker(root, onChange){
+  const a = avatar || (avatar = { ...DEFAULT_AV });
+  const unlocked = g => g.by==="all" ? BUDDY_KEYS.every(k=>discovered.has(k)) : discovered.has(g.by);
+  const sw = (list, key) => list.map((c,i)=>`<button class="sw ${a[key]===i?"on":""}" data-k="${key}" data-v="${i}" style="background:${c}" aria-label="${key} ${i+1}"></button>`).join("");
+  const opts = (obj, key) => Object.entries(obj).map(([v,l])=>`<button class="opt ${a[key]===v?"on":""}" data-k="${key}" data-v="${v}">${l}</button>`).join("");
+  root.innerHTML = `<div class="maker"><div class="av" id="mav">${avatarSVG(a,140)}</div><div>
+    <input class="name" id="mname" placeholder="Chef's name (optional)" maxlength="14" value="${esc(a.name||"")}">
+    <div class="eyebrow">Skin</div><div class="opts">${sw(SKIN,"skin")}</div>
+    <div class="eyebrow">Hair</div><div class="opts">${opts(HAIR,"hair")}</div><div class="opts">${sw(HAIRC,"hairc")}</div>
+    <div class="eyebrow">Eyes · glasses</div><div class="opts">${opts(EYES,"eyes")}${opts(GLASSES,"glasses")}</div>
+    <div class="eyebrow">Shirt · hat</div><div class="opts">${sw(SHIRT,"shirt")}</div><div class="opts">${opts(HATS,"hat")}</div>
+    <div class="eyebrow">Earned gear</div><div class="opts">${GEAR.map(g=>{ const ok=unlocked(g); return `<button class="opt ${a.wear.includes(g.id)?"on":""} ${ok?"":"locked"}" data-g="${g.id}" ${ok?"":"disabled"}>${g.icon} ${g.name}${ok?"":" 🔒"}</button>`; }).join("")}</div>
+    <div class="note">Gear unlocks when you find the buddies it belongs to. The crown is for finding all ten.</div></div></div>`;
+  root.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{ const k=b.dataset.k; a[k] = ["skin","hairc","shirt"].includes(k) ? +b.dataset.v : b.dataset.v; saveAll(); maker(root,onChange); if(onChange) onChange(); });
+  root.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ const id=b.dataset.g; a.wear = a.wear.includes(id) ? a.wear.filter(x=>x!==id) : [...a.wear,id]; saveAll(); maker(root,onChange); if(onChange) onChange(); });
+  root.querySelector("#mname").oninput = e=>{ a.name=e.target.value; saveAll(); };
+}
+
+/* ---------- the plate game ---------- */
+const HAND = 5, PAIRS_PER_PLATE = 3;
+let round = null;
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function newRound(){
+  const deck = shuffle(DECK);
+  round = { deck, hand: deck.splice(0,HAND), sel:[], plate:[], met:[], spaced:[], foods:[], results:[] };
+  ensureMatch();
+}
+// Every hand holds at least one buddy match, so a young player always has a good move to find.
+function handHasMatch(){ for(let i=0;i<round.hand.length;i++) for(let j=i+1;j<round.hand.length;j++) if(wouldBuddy(round.hand[i],round.hand[j])) return true; return false; }
+function ensureMatch(){
+  if(handHasMatch()) return;
+  for(let d=0; d<round.deck.length; d++){ const cand=round.deck[d]; if(round.hand.some(h=>wouldBuddy(cand,h))){ round.deck.splice(d,1); round.deck.push(round.hand[round.hand.length-1]); round.hand[round.hand.length-1]=cand; return; } }
+}
+function pairsIn(cards){ // every buddy/space rule satisfied by the union of nutrients on these cards
+  const ids=[...new Set(cards.flatMap(c=>c.has))]; const out=[];
+  for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++){ const k=ruleKey(ids[i],ids[j]); if(RULES[k]) out.push(k); }
+  return out;
+}
+function wouldBuddy(card, other){ return pairsIn([card,other]).some(k=>RULES[k].type==="buddy" && !pairsIn([other]).includes(k)); }
+function renderPlay(){
+  if(!round) newRound();
+  const a=avatar||DEFAULT_AV, sel=round.sel;
+  const slots = Array.from({length:PAIRS_PER_PLATE*2},(_,i)=>{ const c=round.plate[i]; if(!c) return `<div class="slot"></div>`;
+    const pairIdx=Math.floor(i/2), res=round.results[pairIdx]; const tag = i%2===1 && res ? (res.buddy.length?`<span class="pair">${res.buddy.length} 🏅</span>`:res.space.length?`<span class="pair space">space</span>`:"") : "";
+    return `<div class="slot full">${c.e}${tag}</div>`; }).join("");
+  const sel2 = sel.length===2, tip = sel.length===0 ? "Tap two foods to put them on the plate together." : sel.length===1 ? "Pick a second food. ✦ marks a buddy match." : "Serve it and see who meets!";
+  $("#view").innerHTML = `<div class="top"><div class="av">${avatarSVG(a,64)}</div><div><h1>${esc(a.name||"Chef")}'s plate</h1><div class="sub">Pair ${round.plate.length/2+1} of ${PAIRS_PER_PLATE} · ${BUDDY_KEYS.filter(k=>discovered.has(k)).length} of ${BUDDY_KEYS.length} buddy pairs found</div></div></div>
+    <div class="plate"><div class="rim"></div><div class="slots">${slots}</div></div>
+    <div class="hand">${round.hand.map((c,i)=>`<div class="card ${sel.includes(i)?"sel":""} ${sel.length===1&&!sel.includes(i)&&wouldBuddy(c,round.hand[sel[0]])?"hint":""}" data-i="${i}"><div class="food">${c.e}</div><div class="n">${esc(c.name)}</div><div class="bud">${c.has.map(chip).join("")}</div></div>`).join("")}</div>
+    <div class="row"><button class="btn gold block" id="serve" ${sel2?"":"disabled"}>Serve these two</button></div><p class="tip">${tip}</p>`;
+  $$(".card").forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; if(sel.includes(i)) round.sel=sel.filter(x=>x!==i); else if(sel.length<2) round.sel=[...sel,i]; else round.sel=[sel[1],i]; renderPlay(); });
+  $("#serve").onclick = serve;
+}
+function serve(){
+  const [i,j]=round.sel; const cards=[round.hand[i], round.hand[j]];
+  const keys=pairsIn(cards); const buddy=keys.filter(k=>RULES[k].type==="buddy"), space=keys.filter(k=>RULES[k].type==="space");
+  const newly = buddy.filter(k=>!discovered.has(k)); buddy.forEach(k=>discovered.add(k)); space.forEach(k=>spaceLearned.add(k));
+  round.results = round.results||[]; round.results.push({buddy,space,newly}); round.plate.push(...cards); round.foods.push(...cards.map(c=>c.name));
+  round.met.push(...buddy); round.spaced.push(...space);
+  // deal replacements
+  round.hand = round.hand.filter((_,k)=>k!==i&&k!==j); while(round.hand.length<HAND && round.deck.length) round.hand.push(round.deck.shift()); ensureMatch();
+  round.sel=[]; saveAll();
+  const unlockedGear = GEAR.filter(g=>newly.includes(g.by) && !gear.has(g.id)); unlockedGear.forEach(g=>gear.add(g.id));
+  if(BUDDY_KEYS.every(k=>discovered.has(k)) && !gear.has("crown")){ gear.add("crown"); unlockedGear.push(GEAR.find(g=>g.id==="crown")); }
+  saveAll();
+  showServe(cards, buddy, space, newly, unlockedGear);
+}
+function showServe(cards, buddy, space, newly, unlockedGear){
+  const title = buddy.length ? (newly.length ? "Best buddies!" : "Buddies again!") : space.length ? "Needs some space!" : "Yummy!";
+  const k0 = buddy[0]||space[0]; let meet="", say="";
+  if(k0){ const [a,b]=k0.split("_"); const r=RULES[k0]; meet=`<div class="meet"><div class="av">${buddySVG(CH[a],104)}</div><div class="heart">${buddy.length?"💛":"↔️"}</div><div class="av">${buddySVG(CH[b],104)}</div></div>`;
+    const single = cards.find(c=>pairsIn([c]).includes(k0));
+    say = `${r.kid} ${buddy.length ? (single?`<b>${esc(single.name)}</b> brings both of them by itself — a double helper!`:`<b>${esc(cards[0].name)}</b> brings ${CH[cards[0].has.find(x=>k0.split("_").includes(x))]?.name||""} and <b>${esc(cards[1].name)}</b> brings ${CH[cards[1].has.find(x=>k0.split("_").includes(x)&&x!==cards[0].has.find(y=>k0.split("_").includes(y)))]?.name||"their friend"}.`) : `Still a fine plate; just enjoy these two ${r.timing.toLowerCase()}.`}`; }
+  else say = `${cards[0].e} ${esc(cards[0].name)} and ${cards[1].e} ${esc(cards[1].name)} are a tasty pair, but no buddies met this time. Look for the ✦ next round.`;
+  const extra = buddy.slice(1).map(k=>{ const [a,b]=k.split("_"); return `<div class="reward" style="background:var(--soft);border-color:var(--line);color:var(--ink)"><span class="big">🤝</span><span>${CH[a].name} + ${CH[b].name} met too: ${RULES[k].verdict}</span></div>`; }).join("");
+  const spaced = buddy.length && space.length ? space.slice(0,1).map(k=>{ const [a,b]=k.split("_"); return `<div class="reward" style="background:#F6DCDC;border-color:#E5B3B3;color:#8b2c2c"><span class="big">↔️</span><span>${CH[a].name} and ${CH[b].name} are on this plate too — ${RULES[k].kid}</span></div>`; }).join("") : "";
+  const rewards = [...newly.map(k=>{ const [a,b]=k.split("_"); return `<div class="reward"><span class="big">🏅</span><span>New badge: ${CH[a].name} + ${CH[b].name}</span></div>`; }), ...unlockedGear.map(g=>`<div class="reward"><span class="big">${g.icon}</span><span>Unlocked for your chef: ${g.name}. Put it on in the Closet.</span></div>`)].join("");
+  if(newly.length) confetti();
+  const last = round.plate.length >= PAIRS_PER_PLATE*2;
+  sheet(`${meet}<p class="verdict ${buddy.length?"":space.length?"space":""}">${title}</p><p class="say">${say}</p>${extra}${spaced}${rewards}`, [{label: last ? "Finish the plate" : "Next pair", cls:"gold", go: last ? finishPlate : renderPlay}]);
+}
+function finishPlate(){
+  plates.push(...round.foods); saveAll();
+  const met=[...new Set(round.met)], unlockedRecipes = RECIPES.filter(r=>met.includes(ruleKey(...r.pair)) && !cooked.has(r.id)).slice(0,2);
+  const list = met.length ? met.map(k=>{ const [a,b]=k.split("_"); return `<div class="badge"><span class="big">🏅</span><span>${CH[a].name} + ${CH[b].name}<small>${RULES[k].verdict}</small></span></div>`; }).join("") : `<p class="note">No buddies met on this plate. Watch for the ✦ hint next time: it shows foods whose buddies are friends.</p>`;
+  const rec = unlockedRecipes.length ? `<div class="eyebrow">For the grown-ups' cookbook</div>${unlockedRecipes.map(r=>`<div class="recipe"><div class="n">${RECIPE_EMOJI[r.id]||"🍽"} ${esc(r.name)}</div><div class="m">${r.meal} · ${r.prep} min · ${CH[r.pair[0]].name} + ${CH[r.pair[1]].name}</div></div>`).join("")}` : "";
+  sheet(`<p class="verdict">Plate complete!</p><p class="say">${round.plate.map(c=>c.e).join(" ")}</p><div class="grid">${list}</div>${rec}`, [{label:"New plate", cls:"gold", go:()=>{ newRound(); renderPlay(); }},{label:"Build my team", cls:"ghost", go:()=>{ newRound(); go("team"); }}]);
+}
+function confetti(){ const cols=["#E0A93E","#7DB33F","#D75E8A","#4E97DD","#3BB58C"]; for(let i=0;i<40;i++){ const d=document.createElement("i"); d.className="confetti"; d.style.left=Math.random()*100+"vw"; d.style.background=cols[i%cols.length]; d.style.animationDelay=(Math.random()*.4)+"s"; d.style.transform=`rotate(${Math.random()*360}deg)`; document.body.appendChild(d); setTimeout(()=>d.remove(),2200); } }
+
+/* ---------- the team: captain + teammates, built from buddies the child has met ---------- */
+const metIds = () => [...new Set(BUDDY_KEYS.filter(k=>discovered.has(k)).flatMap(k=>k.split("_")))];
+const clash = (a,b) => { const r=RULES[ruleKey(a,b)]; return r && r.type==="space" ? r : null; };
+const teamIds = () => team.captain ? [team.captain, ...team.members] : [];
+function setCaptain(id){ team.captain=id; team.members=team.members.filter(m=>m!==id && !clash(id,m)); saveAll(); }
+function toggleMember(id){
+  if(team.members.includes(id)){ team.members=team.members.filter(m=>m!==id); saveAll(); return null; }
+  const c = teamIds().map(t=>clash(t,id)).find(Boolean); if(c) return c;
+  if(team.members.length>=3) return { full:true };
+  team.members.push(id); saveAll(); return null;
+}
+// Grocery list from the team: foods carrying the most teammates first, then one good pick per aisle for variety.
+const AISLES = [["Produce",["Vegetable","Leafy green","Fruit","Berry","Citrus","Herb","Sea vegetable"]],["Protein & dairy",["Protein","Fish","Meat","Dairy","Legume"]],["Grains, nuts & seeds",["Grain","Nut","Seed"]],["Pantry",["Oil","Dried fruit","Treat","Drink"]]];
+function groceryFor(ids){
+  if(!ids.length) return [];
+  const scored = FOODS.map(f=>({ f, n:f.has.filter(h=>ids.includes(h)).length })).filter(x=>x.n>0).sort((a,b)=>b.n-a.n || a.f.name.localeCompare(b.f.name));
+  const pick = [], used = new Set();
+  scored.filter(x=>x.n>=2).slice(0,4).forEach(x=>{ pick.push(x); used.add(x.f.name); });
+  for(const [aisle, cats] of AISLES){ let got=0; for(const x of scored){ if(got>=2) break; if(used.has(x.f.name) || !cats.includes(x.f.cat)) continue; pick.push(x); used.add(x.f.name); got++; } }
+  for(const id of ids){ if(!pick.some(x=>x.f.has.includes(id))){ const x=scored.find(y=>y.f.has.includes(id)&&!used.has(y.f.name)); if(x){ pick.push(x); used.add(x.f.name); } } }
+  return pick.map(x=>({ ...x, aisle: (AISLES.find(([,cats])=>cats.includes(x.f.cat))||["Other"])[0], emoji: FOOD_EMOJI[x.f.name]||"" }));
+}
+function renderTeam(){
+  const met = metIds(), cap = team.captain ? CH[team.captain] : null;
+  const row = (c, kind) => { const on = kind==="captain" ? team.captain===c.id : team.members.includes(c.id); const blocked = kind==="member" && !on && teamIds().some(t=>clash(t,c.id)); return `<button class="opt ${on?"on":""} ${blocked?"locked":""}" data-${kind}="${c.id}" style="${on?`background:${c.jersey};border-color:${c.jersey};color:#fff`:""}">${c.sym} ${c.name}${blocked?" ↔️":""}</button>`; };
+  const roster = teamIds().map(id=>`<div class="badge" style="flex-direction:column;text-align:center;position:relative"><span style="width:64px">${buddySVG(CH[id],64)}</span><span><b>${CH[id].name}</b><small>${id===team.captain?"Captain":CH[id].nutrient}</small></span></div>`).join("");
+  const pairsInTeam = BUDDY_KEYS.filter(k=>{ const [a,b]=k.split("_"); return teamIds().includes(a)&&teamIds().includes(b); });
+  $("#view").innerHTML = `<div class="top"><div class="av">${avatarSVG(avatar||DEFAULT_AV,64)}</div><div><h1>${esc((avatar||{}).name||"Chef")}'s team</h1><div class="sub">${cap?`Captain ${cap.name} · ${team.members.length} of 3 teammates`:"Pick a captain to start a team"}</div></div></div>
+    ${met.length ? `<div class="eyebrow">Captain</div><div class="opts">${met.map(id=>row(CH[id],"captain")).join("")}</div>
+    ${cap ? `<div class="eyebrow">Teammates (up to 3)</div><div class="opts">${met.filter(id=>id!==team.captain).map(id=>row(CH[id],"member")).join("")}</div><p class="note" id="teamnote">Best buddies play together. Pairs marked ↔️ need some space from someone already on the team.</p>` : ""}
+    ${teamIds().length ? `<div class="eyebrow">This week's team</div><div class="grid" style="grid-template-columns:repeat(${Math.min(4,teamIds().length)},1fr)">${roster}</div>
+    ${pairsInTeam.length?`<div class="reward"><span class="big">🤝</span><span>${pairsInTeam.length} best-buddy pair${pairsInTeam.length>1?"s":""} on this team: ${pairsInTeam.map(k=>k.split("_").map(x=>CH[x].name).join(" + ")).join(", ")}</span></div>`:""}
+    <p class="note">Your chef wears the captain's jersey, and the grown-ups get a shopping list for this team.</p>` : ""}` : `<div class="recipe"><div class="n">No buddies met yet</div><div class="m">Play a plate and meet some buddies; then you can pick a captain and build a team.</div></div>`}
+    <div class="eyebrow" style="margin-top:18px">Badges</div>${badgesHTML()}`;
+  $$("[data-captain]").forEach(b=>b.onclick=()=>{ setCaptain(b.dataset.captain===team.captain?null:b.dataset.captain); renderTeam(); });
+  $$("[data-member]").forEach(b=>b.onclick=()=>{ const r=toggleMember(b.dataset.member); if(r&&r.full) $("#teamnote").innerHTML=`<b>The team is full.</b> Tap a teammate to take them off first.`; else if(r){ const [a,c]=[CH[r===clash(team.captain,b.dataset.member)?team.captain:teamIds().find(t=>clash(t,b.dataset.member))], CH[b.dataset.member]]; $("#teamnote").innerHTML=`<b>${a.name} and ${c.name} need some space.</b> ${r.kid} Pick one of them for this team.`; } else renderTeam(); });
+}
+function badgesHTML(){
+  const cells = BUDDY_KEYS.map(k=>{ const [a,b]=k.split("_"); const on=discovered.has(k); return `<div class="badge ${on?"":"off"}"><span class="big">${on?"🏅":"🔒"}</span><span>${CH[a].name} + ${CH[b].name}<small>${on?RULES[k].kid:"Find them on a plate"}</small></span></div>`; }).join("");
+  const sp = SPACE_KEYS.map(k=>{ const [a,b]=k.split("_"); const on=spaceLearned.has(k); return `<div class="badge ${on?"":"off"}"><span class="big">↔️</span><span>${CH[a].name} + ${CH[b].name}<small>${on?RULES[k].timing:"Not learned yet"}</small></span></div>`; }).join("");
+  return `<div class="grid">${cells}</div><div class="eyebrow">Need some space</div><p class="note">Both good for you; they just share a door, so they go in at different meals.</p><div class="grid">${sp}</div>
+    <div class="eyebrow">Meet the teams</div><p class="note">Every buddy plays for a team: the team is the vitamin or mineral, the number is its symbol, the name is the player.</p><div class="grid">${CHARACTERS.map(c=>`<div class="badge" style="flex-direction:column;text-align:center"><span style="width:72px">${buddySVG(c,72)}</span><span><b>${c.name}</b> · ${c.nutrient}<small>${c.does}</small></span></div>`).join("")}</div>`;
+}
+/* ---------- other tabs ---------- */
+function renderCloset(){ $("#view").innerHTML = `<div class="top"><div><h1>Closet</h1><div class="sub">Change your chef any time.</div></div></div><div id="maker1"></div>`; maker($("#maker1")); }
+function renderGrown(){
+  const unlocked = RECIPES.filter(r=>discovered.has(ruleKey(...r.pair))).sort((a,b)=>{ const t=teamIds(); const ia=t.includes(a.pair[0])&&t.includes(a.pair[1]), ib=t.includes(b.pair[0])&&t.includes(b.pair[1]); return (ib?1:0)-(ia?1:0); });
+  const shop = [...new Set(plates.slice(-24))];
+  const ids = teamIds(), list = groceryFor(ids);
+  const byAisle = AISLES.map(([a])=>a).concat(["Other"]).map(a=>({a, items:list.filter(x=>x.aisle===a)})).filter(x=>x.items.length);
+  const teamList = ids.length ? `<div class="eyebrow">Shopping list for ${CH[team.captain].name}'s team</div><p class="note">${ids.map(i=>CH[i].name).join(", ")}: foods that bring the most teammates home come first; the rest keep the basket varied. Tap to check off.</p>
+    ${byAisle.map(x=>`<div class="eyebrow" style="margin-top:8px;color:var(--ink)">${x.a}</div><div class="shop">${x.items.map(it=>`<span class="${shopDone.has(it.f.name)?"done":""}" data-shop="${esc(it.f.name)}">${it.emoji} ${esc(it.f.name)} <small style="color:var(--muted)">${it.f.has.filter(h=>ids.includes(h)).map(h=>CH[h].sym).join("·")}</small></span>`).join("")}</div>`).join("")}
+    <div class="row" style="margin-top:10px"><button class="btn ghost" id="shareList">Share list</button><button class="btn ghost" id="clearDone">Uncheck all</button></div>` : `<div class="eyebrow">Shopping list</div><div class="recipe"><div class="n">No team yet</div><div class="m">When your child picks a captain and teammates on the Team tab, a grocery list for that team appears here.</div></div>`;
+  const byMeal = ["Breakfast","Lunch","Dinner","Snack"].map(m=>({m, list:unlocked.filter(r=>r.meal===m)})).filter(x=>x.list.length);
+  $("#view").innerHTML = `<div class="top"><div><h1>Grown-ups</h1><div class="sub">What the game unlocked, in a form you can cook from.</div></div></div>
+    <p class="note">Each buddy pair your child finds unlocks the recipes built on that pairing. ${unlocked.length} of ${RECIPES.length} recipes are open. Nothing here leaves this device.</p>
+    ${teamList}
+    <div class="eyebrow" style="margin-top:18px">Cookbook</div>
+    ${byMeal.length ? byMeal.map(x=>`<div class="eyebrow">${x.m}</div>${x.list.map(r=>`<div class="recipe"><div class="n">${RECIPE_EMOJI[r.id]||"🍽"} ${esc(r.name)}</div><div class="m">${r.prep} min · serves ${r.serves} · ${CH[r.pair[0]].nutrient} + ${CH[r.pair[1]].nutrient}</div><div class="note" style="margin-top:4px">${esc(r.parent)}</div><details><summary>Ingredients and steps</summary><ul style="padding-left:20px;margin:6px 0 0;font-size:14px">${r.ingredients.map(i=>`<li>${esc(i)}</li>`).join("")}</ul><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><button class="btn ghost" style="margin-top:8px" data-cook="${r.id}">${cooked.has(r.id)?"Cooked ✓ (cook again)":"We cooked this"}</button></details></div>`).join("")}`).join("") : `<div class="recipe"><div class="n">No recipes yet</div><div class="m">Play a plate together; the first buddy pair opens the first recipes.</div></div>`}
+    <div class="eyebrow" style="margin-top:18px">Foods from recent plates</div>${shop.length?`<div class="shop">${shop.map(f=>`<span>${(DECK.find(d=>d.name===f)||{}).e||""} ${esc(f)}</span>`).join("")}</div>`:`<p class="note">Foods from finished plates will collect here.</p>`}
+    <div class="eyebrow" style="margin-top:18px">Coming next</div><p class="note">A weekly meal calendar that the unlocked recipes drop into, and a "we cooked it" that lights up the buddies on your child's side.</p>`;
+  $$("[data-cook]").forEach(b=>b.onclick=()=>{ cooked.add(b.dataset.cook); saveAll(); confetti(); renderGrown(); });
+  $$("[data-shop]").forEach(el=>el.onclick=()=>{ const n=el.dataset.shop; shopDone.has(n)?shopDone.delete(n):shopDone.add(n); saveAll(); renderGrown(); });
+  const sl=$("#shareList"); if(sl) sl.onclick=async()=>{ const text=`${CH[team.captain].name}'s team shopping list (Vitamin Village)\n`+byAisle.map(x=>`\n${x.a}\n`+x.items.map(it=>`${shopDone.has(it.f.name)?"☑":"☐"} ${it.f.name}`).join("\n")).join("\n"); try{ if(navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); sl.textContent="Copied"; } }catch(e){} };
+  const cd=$("#clearDone"); if(cd) cd.onclick=()=>{ shopDone.clear(); saveAll(); renderGrown(); };
+}
+
+/* ---------- shell ---------- */
+let tab="play";
+function go(t){ tab=t; $$(".tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.tab===t)); ({play:renderPlay, team:renderTeam, closet:renderCloset, grown:renderGrown})[t](); window.scrollTo(0,0); }
+$$(".tabbar button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+function sheet(html, buttons){ const o=$("#overlay"), s=$("#sheet"); s.innerHTML = html + `<div class="row" style="margin-top:8px">${buttons.map((b,i)=>`<button class="btn ${b.cls||""}" data-i="${i}" style="flex:1">${b.label}</button>`).join("")}</div>`; s.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=()=>{ o.classList.remove("on"); const b=buttons[+btn.dataset.i]; if(b.go) b.go(); }); o.classList.add("on"); }
+if(avatar){ $("#start").remove(); go("play"); }
+else { maker($("#maker0")); $("#startBtn").onclick=()=>{ if(!avatar) avatar={...DEFAULT_AV}; saveAll(); $("#start").remove(); go("play"); }; }
+</script>
+</body></html>
