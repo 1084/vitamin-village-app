@@ -37,6 +37,18 @@
   .btn { font:inherit; font-weight:900; font-size:15px; padding:12px 18px; border-radius:14px; border:0; background:var(--green); color:#fff; cursor:pointer; box-shadow:var(--shadow); }
   .btn.gold { background:var(--gold); color:#3a2a06; } .btn.ghost { background:transparent; color:var(--ink); border:1.5px solid var(--line); box-shadow:none; } .btn.block { width:100%; }
   .btn:disabled { opacity:.4; box-shadow:none; }
+  .coach { display:flex; align-items:center; gap:10px; background:#FFF6DD; border:1.5px solid #F1D98F; color:#633806; border-radius:16px; padding:10px 12px; margin:10px 0 2px; font-weight:800; font-size:15px; animation:up .3s cubic-bezier(.2,.9,.2,1); }
+  .coach .pt { font-size:24px; animation:nudge .8s ease-in-out infinite alternate; }
+  @keyframes nudge { from { transform:translateY(-3px) } to { transform:translateY(4px) } }
+  .hand.coach-target .card:not(.sel) { animation:pulse 1s ease-in-out infinite alternate; }
+  .hand.coach-target .card.hint { animation:pulse .7s ease-in-out infinite alternate; }
+  #serve.coach-target { animation:pulse .7s ease-in-out infinite alternate; }
+  @keyframes pulse { from { transform:scale(1); box-shadow:var(--shadow); } to { transform:scale(1.04); box-shadow:0 6px 18px rgba(224,169,62,.45); } }
+  .toggles { display:flex; gap:8px; flex-wrap:wrap; }
+  .toggles button { flex:1 1 40%; display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:10px 12px; font:inherit; font-weight:800; color:var(--ink); cursor:pointer; }
+  .toggles button .sw { width:38px; height:22px; border-radius:999px; background:#D9D4C8; position:relative; transition:background .15s; }
+  .toggles button .sw::after { content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:left .15s; }
+  .toggles button.on .sw { background:var(--green); } .toggles button.on .sw::after { left:19px; }
   .tip { color:var(--muted); font-size:13.5px; text-align:center; margin:4px 0 0; min-height:20px; }
   /* result overlay */
   #overlay { position:fixed; inset:0; background:rgba(20,18,14,.55); display:none; align-items:flex-end; justify-content:center; z-index:20; backdrop-filter:blur(3px); }
@@ -504,7 +516,7 @@ const foodArt = (name, w=72) => FOOD_ART[name] ? `<svg viewBox="0 0 100 100" wid
 const DECK = FOODS.filter(f=>FOOD_EMOJI[f.name]).map(f=>({ name:f.name, e:FOOD_EMOJI[f.name]||"", has:f.has }));
 
 /* ---------- progress ---------- */
-const K = { discovered:"vv-discovered", cooked:"vvv-cooked", avatar:"vv-avatar", space:"vv-space", plates:"vv-plates", gear:"vv-gear", team:"vv-team", shop:"vv-shop-done" };
+const K = { discovered:"vv-discovered", cooked:"vvv-cooked", avatar:"vv-avatar", space:"vv-space", plates:"vv-plates", gear:"vv-gear", team:"vv-team", shop:"vv-shop-done", onboard:"vv-onboarded", sound:"vv-sound", haptics:"vv-haptics" };
 const get = (k,d)=>{ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){ return d; } };
 const put = (k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
 const discovered = new Set(get(K.discovered, [])), spaceLearned = new Set(get(K.space, [])), cooked = new Set(get(K.cooked, []));
@@ -639,12 +651,13 @@ function renderPlay(){
   const sel2 = sel.length===2, tip = sel.length===0 ? "Tap two foods to put them on the plate together." : sel.length===1 ? "Pick a second food. ✦ marks a buddy match." : "Serve it and see who meets!";
   $("#view").innerHTML = `<div class="top"><div class="av">${avatarSVG(a,64)}</div><div><h1>${esc(a.name||"Chef")}'s plate</h1><div class="sub">Pair ${round.plate.length/2+1} of ${PAIRS_PER_PLATE} · ${BUDDY_KEYS.filter(k=>discovered.has(k)).length} of ${BUDDY_KEYS.length} buddy pairs found</div></div></div>
     <div class="plate"><div class="rim"></div><div class="slots">${slots}</div></div>
-    <div class="hand">${round.hand.map((c,i)=>`<div class="card ${sel.includes(i)?"sel":""} ${sel.length===1&&!sel.includes(i)&&wouldBuddy(c,round.hand[sel[0]])?"hint":""}" data-i="${i}"><div class="food">${foodArt(c.name,64)}</div><div class="n">${esc(c.name)}</div><div class="bud">${c.has.map(chip).join("")}</div></div>`).join("")}</div>
-    <div class="row"><button class="btn gold block" id="serve" ${sel2?"":"disabled"}>Serve these two</button></div><p class="tip">${tip}</p>`;
-  $$(".card").forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; if(sel.includes(i)) round.sel=sel.filter(x=>x!==i); else if(sel.length<2) round.sel=[...sel,i]; else round.sel=[sel[1],i]; renderPlay(); });
+    ${!onboarded && sel.length<2 ? coachFor(sel) : ""}<div class="hand ${!onboarded && sel.length<2 ? "coach-target" : ""}">${round.hand.map((c,i)=>`<div class="card ${sel.includes(i)?"sel":""} ${sel.length===1&&!sel.includes(i)&&wouldBuddy(c,round.hand[sel[0]])?"hint":""}" data-i="${i}"><div class="food">${foodArt(c.name,64)}</div><div class="n">${esc(c.name)}</div><div class="bud">${c.has.map(chip).join("")}</div></div>`).join("")}</div>
+    ${!onboarded && sel.length===2 ? coachFor(sel) : ""}<div class="row"><button class="btn gold block ${!onboarded && sel.length===2 ? "coach-target" : ""}" id="serve" ${sel2?"":"disabled"}>Serve these two</button></div><p class="tip">${tip}</p>`;
+  $$(".card").forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const off=sel.includes(i); if(off) round.sel=sel.filter(x=>x!==i); else if(sel.length<2) round.sel=[...sel,i]; else round.sel=[sel[1],i]; FX.play(off?"untap":"tap"); FX.hap("light"); renderPlay(); });
   $("#serve").onclick = serve;
 }
 function serve(){
+  FX.play("serve"); FX.hap("medium"); finishOnboarding();
   const [i,j]=round.sel; const cards=[round.hand[i], round.hand[j]];
   const keys=pairsIn(cards); const buddy=keys.filter(k=>RULES[k].type==="buddy"), space=keys.filter(k=>RULES[k].type==="space");
   const newly = buddy.filter(k=>!discovered.has(k)); buddy.forEach(k=>discovered.add(k)); space.forEach(k=>spaceLearned.add(k));
@@ -669,10 +682,13 @@ function showServe(cards, buddy, space, newly, unlockedGear){
   const spaced = buddy.length && space.length ? space.slice(0,1).map(k=>{ const [a,b]=k.split("_"); return `<div class="reward" style="background:#F6DCDC;border-color:#E5B3B3;color:#8b2c2c"><span class="big">↔️</span><span>${CH[a].name} and ${CH[b].name} are on this plate too — ${RULES[k].kid}</span></div>`; }).join("") : "";
   const rewards = [...newly.map(k=>{ const [a,b]=k.split("_"); return `<div class="reward"><span class="big">🏅</span><span>New badge: ${CH[a].name} + ${CH[b].name}</span></div>`; }), ...unlockedGear.map(g=>`<div class="reward"><span class="big">${g.icon}</span><span>Unlocked for your chef: ${g.name}. Put it on in the Closet.</span></div>`)].join("");
   if(newly.length) confetti();
+  setTimeout(()=>{ if(newly.length){ FX.play("badge"); FX.hap("success"); } else if(buddy.length){ FX.play("buddy"); FX.hap("success"); } else if(space.length){ FX.play("space"); FX.hap("warn"); } else { FX.play("yum"); FX.hap("light"); }
+    if(unlockedGear.length) setTimeout(()=>FX.play("unlock"), 700); }, 260);
   const last = round.plate.length >= PAIRS_PER_PLATE*2;
   sheet(`${meet}<p class="verdict ${buddy.length?"":space.length?"space":""}">${title}</p><p class="say">${say}</p>${extra}${spaced}${rewards}`, [{label: last ? "Finish the plate" : "Next pair", cls:"gold", go: last ? finishPlate : renderPlay}]);
 }
 function finishPlate(){
+  FX.play("plate"); FX.hap("success");
   plates.push(...round.foods); saveAll();
   const met=[...new Set(round.met)], unlockedRecipes = RECIPES.filter(r=>met.includes(ruleKey(...r.pair)) && !cooked.has(r.id)).slice(0,2);
   const list = met.length ? met.map(k=>{ const [a,b]=k.split("_"); return `<div class="badge"><span class="big">🏅</span><span>${CH[a].name} + ${CH[b].name}<small>${RULES[k].verdict}</small></span></div>`; }).join("") : `<p class="note">No buddies met on this plate. Watch for the ✦ hint next time: it shows foods whose buddies are friends.</p>`;
@@ -741,19 +757,65 @@ function renderGrown(){
     <div class="eyebrow" style="margin-top:18px">Cookbook</div>
     ${byMeal.length ? byMeal.map(x=>`<div class="eyebrow">${x.m}</div>${x.list.map(r=>`<div class="recipe"><div class="n">${RECIPE_EMOJI[r.id]||"🍽"} ${esc(r.name)}</div><div class="m">${r.prep} min · serves ${r.serves} · ${CH[r.pair[0]].nutrient} + ${CH[r.pair[1]].nutrient}</div><div class="note" style="margin-top:4px">${esc(r.parent)}</div><details><summary>Ingredients and steps</summary><ul style="padding-left:20px;margin:6px 0 0;font-size:14px">${r.ingredients.map(i=>`<li>${esc(i)}</li>`).join("")}</ul><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><button class="btn ghost" style="margin-top:8px" data-cook="${r.id}">${cooked.has(r.id)?"Cooked ✓ (cook again)":"We cooked this"}</button></details></div>`).join("")}`).join("") : `<div class="recipe"><div class="n">No recipes yet</div><div class="m">Play a plate together; the first buddy pair opens the first recipes.</div></div>`}
     <div class="eyebrow" style="margin-top:18px">Foods from recent plates</div>${shop.length?`<div class="shop">${shop.map(f=>`<span>${foodArt(f,22)} ${esc(f)}</span>`).join("")}</div>`:`<p class="note">Foods from finished plates will collect here.</p>`}
+    <div class="eyebrow" style="margin-top:18px">Settings</div>
+    <div class="toggles"><button id="tSound" class="${FX.sound?"on":""}"><span>Sounds</span><span class="sw"></span></button><button id="tHap" class="${FX.haptics?"on":""}"><span>Buzz on taps</span><span class="sw"></span></button></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="replayHowto">Show the how-to again</button></div>
     <div class="eyebrow" style="margin-top:18px">Coming next</div><p class="note">A weekly meal calendar that the unlocked recipes drop into, and a "we cooked it" that lights up the buddies on your child's side.</p>`;
-  $$("[data-cook]").forEach(b=>b.onclick=()=>{ cooked.add(b.dataset.cook); saveAll(); confetti(); renderGrown(); });
+  $$("[data-cook]").forEach(b=>b.onclick=()=>{ cooked.add(b.dataset.cook); saveAll(); confetti(); FX.play("unlock"); FX.hap("success"); renderGrown(); });
   $$("[data-shop]").forEach(el=>el.onclick=()=>{ const n=el.dataset.shop; shopDone.has(n)?shopDone.delete(n):shopDone.add(n); saveAll(); renderGrown(); });
   const sl=$("#shareList"); if(sl) sl.onclick=async()=>{ const text=`${CH[team.captain].name}'s team shopping list (Vitamin Village)\n`+byAisle.map(x=>`\n${x.a}\n`+x.items.map(it=>`${shopDone.has(it.f.name)?"☑":"☐"} ${it.f.name}`).join("\n")).join("\n"); try{ if(navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); sl.textContent="Copied"; } }catch(e){} };
   const cd=$("#clearDone"); if(cd) cd.onclick=()=>{ shopDone.clear(); saveAll(); renderGrown(); };
+  $("#tSound").onclick=()=>{ FX.sound=!FX.sound; if(FX.sound) FX.play("yum"); renderGrown(); };
+  $("#tHap").onclick=()=>{ FX.haptics=!FX.haptics; if(FX.haptics) FX.hap("medium"); renderGrown(); };
+  $("#replayHowto").onclick=()=>{ onboarded=false; put(K.onboard,false); newRound(); go("play"); welcome(); };
 }
+
+/* ---------- sound + haptics (all synthesized; nothing downloaded) ---------- */
+const FX = (()=>{
+  let ctx=null, sound=get(K.sound,true), haptics=get(K.haptics,true);
+  const ac=()=>{ try{ ctx ||= new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==="suspended") ctx.resume(); return ctx; }catch(e){ return null; } };
+  function tone(f, t0, dur, type="sine", vol=.16, slideTo){ const c=ac(); if(!c) return; const o=c.createOscillator(), g=c.createGain(), t=c.currentTime+t0;
+    o.type=type; o.frequency.setValueAtTime(f,t); if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.012); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+.05); }
+  const S = {
+    tap:   ()=>tone(660,0,.07,"triangle",.11),
+    untap: ()=>tone(440,0,.07,"triangle",.09),
+    serve: ()=>{ tone(523,0,.12,"sine",.14); tone(784,.1,.2,"sine",.14); },
+    yum:   ()=>{ tone(440,0,.1,"sine",.12); tone(554,.09,.16,"sine",.12); },
+    buddy: ()=>[523,659,784,1047].forEach((f,i)=>tone(f,i*.09,.22,"triangle",.15)),
+    badge: ()=>{ [659,784,988,1319].forEach((f,i)=>tone(f,i*.11,.28,"square",.06)); tone(1319,.48,.55,"triangle",.12); },
+    space: ()=>tone(330,0,.28,"sine",.12,247),
+    plate: ()=>[392,523,659,784,1047].forEach((f,i)=>tone(f,i*.08,.26,"triangle",.13)),
+    unlock:()=>{ tone(880,0,.08,"sine",.12); tone(1175,.08,.22,"sine",.12); },
+    hello: ()=>[523,659,784].forEach((f,i)=>tone(f,i*.12,.3,"sine",.12)),
+  };
+  const V = { light:[10], medium:[18], heavy:[35], success:[12,40,18], warn:[30,40,30] };
+  async function hap(kind="light"){ if(!haptics) return; try{
+    const P=window.Capacitor?.Plugins?.Haptics;            // native (needs @capacitor/haptics in the app shell)
+    if(P){ if(kind==="success"||kind==="warn") await P.notification({type:kind.toUpperCase()}); else await P.impact({style:kind.toUpperCase()}); return; }
+    if(navigator.vibrate) navigator.vibrate(V[kind]||V.light);   // Android browsers; iOS Safari ignores this
+  }catch(e){} }
+  const play=(n)=>{ if(!sound) return; try{ S[n]&&S[n](); }catch(e){} };
+  return { play, hap, prime:ac, get sound(){ return sound; }, set sound(v){ sound=v; put(K.sound,v); }, get haptics(){ return haptics; }, set haptics(v){ haptics=v; put(K.haptics,v); } };
+})();
+document.addEventListener("pointerdown", ()=>FX.prime(), { once:true, passive:true });   // unlock audio on the first touch
+
+/* ---------- first-plate coach: tap, tap, serve ---------- */
+let onboarded = get(K.onboard, false);
+function coachFor(sel){ if(onboarded) return ""; const step = sel.length===0 ? 0 : sel.length===1 ? 1 : 2;
+  const text = ["Tap a food you like.", "Now tap one more. ✦ means it's a buddy match!", "Serve them and see who meets!"][step];
+  return `<div class="coach" data-step="${step}"><span class="pt">👇</span><span>${text}</span></div>`; }
+function finishOnboarding(){ if(onboarded) return; onboarded=true; put(K.onboard,true); }
+function welcome(){ const a=avatar||DEFAULT_AV;
+  sheet(`<div class="meet"><div class="av" style="animation:none">${avatarSVG(a,104)}</div></div><p class="verdict">Hi ${esc(a.name||"Chef")}!</p><p class="say">Let's make your first plate. Pick two foods, serve them, and see which buddies meet.</p>`, [{label:"Let's go", cls:"gold", go:()=>{ FX.play("hello"); FX.hap("light"); renderPlay(); }}]); }
 
 /* ---------- shell ---------- */
 let tab="play";
 function go(t){ tab=t; $$(".tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.tab===t)); ({play:renderPlay, team:renderTeam, closet:renderCloset, grown:renderGrown})[t](); window.scrollTo(0,0); }
-$$(".tabbar button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
-function sheet(html, buttons){ const o=$("#overlay"), s=$("#sheet"); s.innerHTML = html + `<div class="row" style="margin-top:8px">${buttons.map((b,i)=>`<button class="btn ${b.cls||""}" data-i="${i}" style="flex:1">${b.label}</button>`).join("")}</div>`; s.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=()=>{ o.classList.remove("on"); const b=buttons[+btn.dataset.i]; if(b.go) b.go(); }); o.classList.add("on"); }
+$$(".tabbar button").forEach(b=>b.onclick=()=>{ if(b.dataset.tab!==tab){ FX.play("tap"); FX.hap("light"); } go(b.dataset.tab); });
+function sheet(html, buttons){ const o=$("#overlay"), s=$("#sheet"); s.innerHTML = html + `<div class="row" style="margin-top:8px">${buttons.map((b,i)=>`<button class="btn ${b.cls||""}" data-i="${i}" style="flex:1">${b.label}</button>`).join("")}</div>`; s.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=()=>{ FX.hap("light"); o.classList.remove("on"); const b=buttons[+btn.dataset.i]; if(b.go) b.go(); }); o.classList.add("on"); }
 if(avatar){ $("#start").remove(); go("play"); }
-else { maker($("#maker0")); $("#startBtn").onclick=()=>{ if(!avatar) avatar={...DEFAULT_AV}; saveAll(); $("#start").remove(); go("play"); }; }
+else { maker($("#maker0")); $("#startBtn").onclick=()=>{ if(!avatar) avatar={...DEFAULT_AV}; saveAll(); FX.prime(); FX.hap("light"); $("#start").remove(); go("play"); if(!onboarded) welcome(); }; }
 </script>
 </body></html>
