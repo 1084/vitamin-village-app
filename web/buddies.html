@@ -5,32 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Vitamin Buddies</title>
 <style>
-:root{--ink:#3b2a1a;--paper:#fff6e8;--brick:#e9b9a6;--brick2:#d9a08c;--fog:#c99a86;--cell:#f3e2cf;--cell2:#ecd6bf;--green:#6cc04a;--green2:#4e9a2e;--blue:#4aa8e8;--gold:#f7c948;--card:#fff3dd;--shadow:0 4px 0 rgba(0,0,0,.12)}
+:root{--ink:#3b2a1a;--paper:#fff6e8;--brick:#e9b9a6;--brick2:#d9a08c;--cell:#f3e2cf;--cell2:#ecd6bf;--green:#6cc04a;--green2:#4e9a2e;--blue:#4aa8e8;--gold:#f7c948;--card:#fff3dd;--shadow:0 4px 0 rgba(0,0,0,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#1d2a4a;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
-#app{position:fixed;inset:0;display:flex;flex-direction:column;background:linear-gradient(#1b2d5a,#2c4a86 55%,#4a6fb0);padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.screen.on{display:flex}
+#boardScreen{background:linear-gradient(#1b2d5a,#2c4a86 55%,#4a6fb0)}
+#kitchenScreen{background:linear-gradient(#9ed4f2,#cfe9d4 40%,#f1dcc0)}
 .top{display:flex;align-items:center;gap:8px;padding:10px 12px 4px}
 .star{width:44px;height:44px;border-radius:14px;background:var(--gold);display:grid;place-items:center;font-weight:900;font-size:20px;color:#7a4b00;box-shadow:var(--shadow);position:relative}
-.star small{position:absolute;bottom:-14px;left:0;right:0;font-size:9px;color:#fff;text-align:center;font-weight:600}
+.star small{position:absolute;bottom:-14px;left:-6px;right:-6px;font-size:9px;color:#fff;text-align:center;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .pill{flex:1;background:rgba(0,0,0,.35);border-radius:20px;height:34px;display:flex;align-items:center;padding:0 12px 0 10px;color:#fff;font-weight:800;font-size:17px;gap:8px;position:relative}
 .pill .ico{font-size:20px}
 .pill .sub{position:absolute;right:12px;bottom:-15px;font-size:10px;color:#cfe3ff;font-weight:600}
-.counter{display:flex;gap:10px;padding:16px 12px 10px;align-items:flex-end;min-height:118px}
-.order{background:var(--card);border-radius:14px;padding:8px;flex:1;max-width:46%;box-shadow:var(--shadow);position:relative;display:flex;gap:8px;align-items:center}
-.order .buddy{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:17px;flex:none;border:3px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.15)}
-.order .want{flex:1;text-align:center}
-.order .want .em{font-size:30px;line-height:1;display:block;background:#fff;border-radius:10px;padding:4px;position:relative}
+.counter{display:flex;gap:8px;padding:16px 10px 14px;align-items:flex-end;min-height:118px;overflow-x:auto}
+.order{background:var(--card);border-radius:14px;padding:8px 6px;flex:1;min-width:120px;box-shadow:var(--shadow);position:relative;display:flex;gap:6px;align-items:center}
+.order .buddy{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:15px;flex:none;border:3px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.order .buddies{display:flex;flex-direction:column;gap:2px}
+.order .buddies .buddy{width:30px;height:30px;font-size:12px;border-width:2px}
+.order .want{flex:1;text-align:center;display:flex;gap:4px;justify-content:center}
+.order .want .em{font-size:28px;line-height:1;display:block;background:#fff;border-radius:10px;padding:4px;position:relative;flex:1}
+.order .want .em.have{background:#dff5d0}
 .order .want .em b{position:absolute;right:2px;bottom:2px;font-size:10px;background:var(--ink);color:#fff;border-radius:6px;padding:1px 4px}
-.order .name{font-size:11px;font-weight:700;margin-top:2px}
-.order .coins{position:absolute;top:-10px;right:8px;background:var(--gold);color:#7a4b00;font-size:12px;font-weight:900;border-radius:10px;padding:2px 7px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.order .name{font-size:10.5px;font-weight:700;margin-top:2px;line-height:1.15}
+.order .coins{position:absolute;top:-10px;right:6px;background:var(--gold);color:#7a4b00;font-size:12px;font-weight:900;border-radius:10px;padding:2px 7px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
 .order button{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);background:var(--green);color:#fff;border:0;border-radius:12px;padding:6px 18px;font-weight:900;font-size:15px;box-shadow:0 3px 0 var(--green2);display:none}
 .order.can button{display:block}
-.order.empty{opacity:.5;justify-content:center;font-size:12px;font-weight:700}
+.order.pair{background:#ffe9c7}
+.order.dish{background:#ffd9e0}
 .boardwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 10px}
 #board{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(9,1fr);gap:2px;background:#b37a64;border:4px solid #c9906f;border-radius:14px;padding:6px;height:100%;max-width:100%;aspect-ratio:7/9;touch-action:none;position:relative}
 .cell{background:var(--cell);border-radius:6px;position:relative;display:grid;place-items:center;font-size:clamp(20px,7vw,34px);line-height:1}
 .cell:nth-child(odd){background:var(--cell2)}
-.cell.fog{background:repeating-linear-gradient(0deg,var(--brick) 0 12px,var(--brick2) 12px 14px);}
+.cell.fog{background:repeating-linear-gradient(0deg,var(--brick) 0 12px,var(--brick2) 12px 14px)}
 .cell.fog .lk{position:absolute;top:2px;left:3px;font-size:10px;opacity:.7}
 .cell.gen{background:#d7eac9;box-shadow:inset 0 0 0 2px #8bbf6a}
 .cell.gen.rest{filter:grayscale(.6)}
@@ -46,8 +53,9 @@ html,body{margin:0;height:100%;background:#1d2a4a;font-family:-apple-system,"Seg
 .bar .t b{font-size:16px}
 .bar .t small{display:block;font-size:12px;opacity:.75;margin-top:2px}
 .bar button{background:#fff;border:2px solid #d8c3aa;border-radius:12px;padding:6px 10px;font-weight:800;color:var(--ink);font-size:12px}
-.bar button.go{background:var(--green);border-color:var(--green2);color:#fff}
-.nav{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--blue);border:0;font-size:28px;box-shadow:0 4px 0 #2f7fb8}
+.nav{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:18px;background:var(--blue);border:0;font-size:28px;box-shadow:0 4px 0 #2f7fb8;z-index:5}
+.nav .dot{position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#e6473a;color:#fff;font-size:11px;font-weight:900;display:none;place-items:center;border:2px solid #fff}
+.nav.alert .dot{display:grid}
 #toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:rgba(59,42,26,.92);color:#fff;padding:10px 16px;border-radius:14px;font-weight:700;font-size:14px;max-width:86vw;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
 #toast.on{opacity:1}
 .overlay{position:fixed;inset:0;background:rgba(10,20,50,.72);display:none;place-items:center;z-index:70;text-align:center;color:#fff;padding:24px}
@@ -55,17 +63,42 @@ html,body{margin:0;height:100%;background:#1d2a4a;font-family:-apple-system,"Seg
 .overlay h1{font-size:40px;margin:0 0 10px;color:var(--gold);text-shadow:0 3px 0 #a86a00}
 .overlay .big{font-size:60px;margin:14px 0}
 .overlay p{font-size:17px;margin:6px 0 20px;max-width:30ch}
-.overlay button{background:var(--green);border:0;color:#fff;font-size:24px;font-weight:900;padding:12px 40px;border-radius:18px;box-shadow:0 5px 0 var(--green2)}
+.overlay button.main{background:var(--green);border:0;color:#fff;font-size:24px;font-weight:900;padding:12px 40px;border-radius:18px;box-shadow:0 5px 0 var(--green2)}
+.overlay button.main:disabled{background:#9a9a9a;box-shadow:0 5px 0 #6d6d6d}
 .bubble{background:#fff;color:var(--ink);border-radius:16px;padding:14px 16px;max-width:34ch;font-size:16px;line-height:1.35;margin:10px auto 22px;position:relative}
 .bubble .who{display:block;font-weight:900;font-size:13px;margin-bottom:4px}
 .pop{animation:pop .35s ease-out}
 @keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 .fly{position:fixed;z-index:55;font-weight:900;color:var(--gold);font-size:20px;pointer-events:none;animation:fly .9s ease-out forwards;text-shadow:0 2px 0 #7a4b00}
 @keyframes fly{to{transform:translateY(-70px);opacity:0}}
+/* kitchen */
+.scene{flex:1;min-height:0;position:relative;margin:14px 12px 10px;background:#f6e9d2;border:4px solid #d8b58e;border-radius:22px;overflow:hidden}
+.scene .floor{position:absolute;inset:auto 0 0 0;height:46%;background:repeating-linear-gradient(45deg,#e8c9a0 0 14px,#e2bf93 14px 28px)}
+.scene .wall{position:absolute;inset:0 0 46% 0;background:linear-gradient(#fff8ec,#f3e4cc)}
+.scene .sign{position:absolute;top:10px;left:0;right:0;text-align:center;font-weight:900;font-size:18px;color:#7a4b00;letter-spacing:.5px}
+.scene .sign small{display:block;font-size:11px;font-weight:700;color:#8a6a4a}
+.chef{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-size:58px;line-height:1;filter:drop-shadow(0 4px 2px rgba(0,0,0,.2))}
+.rooms{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:60px 10px 10px;gap:10px 8px}
+.cell.gen .lv{background:#2f5a1a}
+.room{background:rgba(255,255,255,.72);border:2px solid #d8b58e;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;font-weight:800;font-size:11.5px;text-align:center;padding:6px 4px}
+.room .em{font-size:34px;line-height:1}
+.room .lvl{font-size:10px;color:#8a6a4a;font-weight:700}
+.room .badge{position:absolute;top:-9px;right:-6px;background:var(--green);color:#fff;font-size:10px;font-weight:900;border-radius:9px;padding:2px 6px;box-shadow:0 2px 0 var(--green2)}
+.room.max{opacity:.75}
+.room.chefspot{background:transparent;border:0}
+.card{background:var(--card);color:var(--ink);border-radius:20px;padding:18px 18px 22px;max-width:320px;width:86vw;text-align:center;position:relative;box-shadow:0 8px 0 rgba(0,0,0,.2)}
+.card h2{margin:0;font-size:22px}
+.card .sub{font-size:12px;font-weight:700;color:#8a6a4a;margin-bottom:10px}
+.card .rew{background:#fff;border-radius:14px;padding:10px;margin:8px 0;font-size:14px;font-weight:700}
+.card .rew b{display:block;font-size:22px;color:#c27a00}
+.card .prog{display:inline-block;background:#fff;border-radius:10px;padding:4px 12px;font-weight:900;margin:6px 0 12px}
+.card .prog span.short{color:#e6473a}
+.card .x{position:absolute;top:-12px;right:-10px;width:36px;height:36px;border-radius:50%;background:#e6473a;color:#fff;border:3px solid #fff;font-weight:900;font-size:18px}
+.card .unl{font-size:12.5px;line-height:1.3;margin:0 0 12px}
 </style>
 </head>
 <body>
-<div id="app">
+<div class="screen on" id="boardScreen">
   <div class="top">
     <div class="star" id="lvl">1<small id="xp"></small></div>
     <div class="pill"><span class="ico">⚡</span><span id="energy">100</span><span class="sub" id="etimer"></span></div>
@@ -73,29 +106,74 @@ html,body{margin:0;height:100%;background:#1d2a4a;font-family:-apple-system,"Seg
   </div>
   <div class="counter" id="counter"></div>
   <div class="boardwrap"><div id="board"></div></div>
-  <div class="bar" id="bar"><div class="t"><b>Vitamin Buddies</b><small>Tap a garden bed or tree to grow something. Drag two of the same together.</small></div></div>
-  <button class="nav" id="nav" aria-label="Kitchen">🏠</button>
+  <div class="bar" id="bar"></div>
+  <button class="nav" id="toKitchen" aria-label="Kitchen">🏠<span class="dot">!</span></button>
+</div>
+<div class="screen" id="kitchenScreen">
+  <div class="top">
+    <div class="star" id="lvl2">1<small id="xp2"></small></div>
+    <div class="pill"><span class="ico">⚡</span><span id="energy2">100</span></div>
+    <div class="pill"><span class="ico">🪙</span><span id="coins2">0</span></div>
+  </div>
+  <div class="scene"><div class="wall"></div><div class="floor"></div><div class="sign">Vitamin Buddies Cafe<small id="cafesub"></small></div><div class="rooms" id="rooms"></div></div>
+  <div class="bar" id="kbar"><div class="t"><b>Your kitchen</b><small>Tap a room to upgrade it. Upgrades earn EXP, unlock new foods and bring more buddies to the counter.</small></div></div>
+  <button class="nav" id="toBoard" aria-label="Board">🧺</button>
 </div>
 <div id="ghost"></div>
 <div id="toast"></div>
-<div class="overlay" id="levelup"><div><h1>Level Up</h1><div class="big">⭐</div><p id="lvmsg"></p><button id="collect">Collect</button></div></div>
-<div class="overlay" id="story"><div><div class="bubble"><span class="who" id="swho"></span><span id="stext"></span></div><button id="sok">Continue</button></div></div>
+<div class="overlay" id="levelup"><div><h1>Level Up</h1><div class="big">⭐</div><p id="lvmsg"></p><button class="main" id="collect">Collect</button></div></div>
+<div class="overlay" id="story"><div><div class="bubble"><span class="who" id="swho"></span><span id="stext"></span></div><button class="main" id="sok">Continue</button></div></div>
+<div class="overlay" id="roomcard"><div class="card"><button class="x" id="rclose">×</button><h2 id="rname"></h2><div class="sub" id="rlv"></div><div class="rew">Reward<b id="rexp"></b></div><p class="unl" id="runl"></p><div class="prog">🪙 <span id="rprog"></span></div><br><button class="main" id="rup">Upgrade</button></div></div>
 <script>
 /* ---------- data ---------- */
-const W=7,H=9,MAXE=100,REGEN_MS=120000,GEN_CHARGES=6,GEN_REST_MS=180000,MAXLV=6;
+const W=7,H=9,MAXE=100,GEN_CHARGES=6,GEN_REST_MS=180000,MAXLV=6;
 const CHAINS={
-  garden:{name:"Garden",gen:{em:"🪴",name:"Garden bed"},buddy:"ava",
+  garden:{name:"Garden",gen:{em:"🪴",name:"Garden bed"},buddies:["ava"],spot:[1,3],
     lv:[["🌰","Seed"],["🌱","Sprout"],["🥕","Carrot"],["📦","Crate of carrots"],["🍢","Carrot sticks"],["🍲","Carrot soup"]]},
-  orchard:{name:"Orchard",gen:{em:"🌳",name:"Apple tree"},buddy:"cece",
-    lv:[["🌸","Blossom"],["🍏","Green apple"],["🍎","Apple"],["🧺","Basket of apples"],["🍽️","Apple slices"],["🥧","Apple crumble"]]}
+  orchard:{name:"Orchard",gen:{em:"🌳",name:"Apple tree"},buddies:["cece"],spot:[5,3],
+    lv:[["🌸","Blossom"],["🍏","Green apple"],["🍎","Apple"],["🧺","Basket of apples"],["🍽️","Apple slices"],["🥧","Apple crumble"]]},
+  greens:{name:"Greens",gen:{em:"🌿","name":"Greens bed"},buddies:["cal","cece","ava"],spot:[1,5],
+    lv:[["🌰","Kale seed"],["🍃","Leaf"],["🥬","Kale"],["🪢","Kale bunch"],["🫧","Washed kale"],["🥗","Kale salad"]]},
+  citrus:{name:"Citrus",gen:{em:"🍊","name":"Orange tree"},buddies:["cece"],spot:[5,5],
+    lv:[["🌼","Blossom"],["🟢","Green orange"],["🍊","Orange"],["🔪","Peeled orange"],["🧃","Orange juice"],["🥤","Orange smoothie"]]},
+  grain:{name:"Grain",gen:{em:"🗄️","name":"Pantry shelf"},buddies:["magnus","ella"],spot:[3,1],
+    lv:[["🌾","Grain"],["🥣","Oats"],["🍚","Bowl of oats"],["🍞","Bread slice"],["🥪","Toast"],["🥑","Avocado toast"]]},
+  dairy:{name:"Dairy",gen:{em:"🧊","name":"Fridge"},buddies:["cal","sunny"],spot:[3,7],
+    lv:[["💧","Milk drop"],["🥛","Cup of milk"],["🫙","Milk jug"],["🍦","Yogurt"],["🧀","Cheese"],["🥪","Cheese toastie"]]}
 };
 const BUDDIES={
-  ava:{name:"Ava",sym:"A",nutrient:"Vitamin A",bg:"#FDEBD9",ink:"#7A4409",fact:"Carrots carry Ava, and she helps you see well in the dark!",does:"Helps you see well and keeps skin healthy."},
-  cece:{name:"Cece",sym:"C",nutrient:"Vitamin C",bg:"#EAF3DE",ink:"#27500A",fact:"Apples carry Cece, who helps cuts heal and fights off sniffles.",does:"Helps cuts heal and fights off sniffles."}
+  ava:{name:"Ava",sym:"A",nutrient:"Vitamin A",bg:"#FDEBD9",ink:"#7A4409",fact:"Carrots carry Ava, and she helps you see well in the dark!"},
+  cece:{name:"Cece",sym:"C",nutrient:"Vitamin C",bg:"#EAF3DE",ink:"#27500A",fact:"Apples and oranges carry Cece, who helps cuts heal and fights off sniffles."},
+  cal:{name:"Cal",sym:"Ca",nutrient:"Calcium",bg:"#E6F1FB",ink:"#0C447C",fact:"Almost all your calcium lives in your bones and teeth!"},
+  sunny:{name:"Sunny",sym:"D",nutrient:"Vitamin D",bg:"#FAEEDA",ink:"#633806",fact:"Your body makes Vitamin D when you play in the sun!"},
+  magnus:{name:"Magnus",sym:"Mg",nutrient:"Magnesium",bg:"#E1F5EE",ink:"#085041",fact:"Magnesium helps with 300+ jobs in your body!"},
+  ella:{name:"Ella",sym:"E",nutrient:"Vitamin E",bg:"#F3E8FB",ink:"#4A1E6B",fact:"Avocado and nuts carry Ella, who protects your cells."}
 };
+/* pair orders: two items, two buddies, the kid-friendly line from the buddy rules */
+const PAIRS=[
+  {b:["cal","magnus"],a:{c:"greens",l:3},d:{c:"grain",l:3},kid:"Cal and Magnus work as a team for strong bones and calm muscles.",verdict:"Good teammates!"},
+  {b:["cece","ella"],a:{c:"orchard",l:3},d:{c:"grain",l:6},kid:"When Ella gets tired, Cece recharges her like a battery!",verdict:"Best buddies!"},
+  {b:["sunny","cal"],a:{c:"dairy",l:4},d:{c:"dairy",l:5},kid:"Sunny helps your tummy soak up Cal, so your bones grow big and strong.",verdict:"Best buddies!"},
+  {b:["ava","cece"],a:{c:"garden",l:3},d:{c:"citrus",l:3},kid:"Ava and Cece both love a colourful plate.",verdict:"Good teammates!"},
+  {b:["cal","cece"],a:{c:"greens",l:4},d:{c:"citrus",l:4},kid:"Kale brings Cal, oranges bring Cece. Strong bones and quick healing!",verdict:"Good teammates!"}
+];
+const ROOMS={
+  garden:{name:"Garden",em:"🌻",base:20,unl:["Unlocks the Greens bed: kale from seed to salad.","Unlocks the Orange tree: the Citrus chain.","Garden beds rest for half as long."]},
+  counter:{name:"Counter",em:"🛎️",base:40,unl:["A third buddy can wait at the counter.","A fourth buddy can wait at the counter.","Buddies pay 25% more coins."]},
+  pantry:{name:"Pantry",em:"🗄️",base:60,unl:["Unlocks the Pantry shelf: the Grain chain, oats to avocado toast.","Generators hold 8 charges instead of 6.","Buddies ask for pair orders more often."]},
+  fridge:{name:"Fridge",em:"🧊",base:80,unl:["Unlocks the Fridge: the Dairy chain, milk to cheese toastie.","Energy comes back every 90 seconds instead of 120.","Energy comes back every 60 seconds."]},
+  stove:{name:"Stove",em:"🍳",base:120,unl:["Buddies start asking for finished dishes (Lv.6) for 60 coins.","Dish orders pay 90 coins.","Dish orders also drop a gift box."]},
+  dining:{name:"Dining room",em:"🪑",base:300,unl:["Your buddy team sits at the window.","Fancy tables: every order pays +2.","A chandelier. It's beautiful."]}
+};
+const ROOM_MAX=3;
+const roomCost=(k,l)=>Math.round(ROOMS[k].base*Math.pow(1.7,l));
+const roomExp=(k,l)=>[5,8,12][l]+Object.keys(ROOMS).indexOf(k)*2;
 const STORY=[
   {who:"Ava",text:"Oh good, the cafe is open again! I'm starving. Could you grow me something orange?"},
-  {who:"Cece",text:"Hi! If you grow apples I'll bring my friends. We all get stronger when we eat together."}
+  {who:"Cece",text:"Hi! If you grow apples I'll bring my friends. We all get stronger when we eat together."},
+  {who:"Cal",text:"A kitchen! Could you fix up the garden? I like my kale, and your coins can pay for it. Tap the house to see the rooms."},
+  {who:"Sunny",text:"Some of us work better as a pair. When two buddies ask together, feed them both and watch what happens."},
+  {who:"Magnus",text:"Every room you upgrade brings someone new to the counter. Keep going, chef!"}
 ];
 const need=l=>Math.round(10*Math.pow(1.4,l-1));
 const K="vb.save.v1";
@@ -111,98 +189,148 @@ function freshState(){
   const put=(x,y,c,l)=>grid[y*W+x]={c,l};
   put(2,4,"garden",1);put(3,4,"garden",1);put(4,4,"orchard",1);put(2,5,"orchard",1);put(4,5,"garden",2);put(3,6,"orchard",2);
   grid[0*W+0]={fog:true,cry:true};grid[8*W+6]={fog:true,cry:true};
-  return {grid,energy:MAXE,tick:Date.now(),coins:0,level:1,exp:0,orders:[null,null],facts:0,story:0,seen:{}};
+  return {grid,energy:MAXE,tick:Date.now(),coins:0,level:1,exp:0,orders:[null,null],facts:0,story:0,seen:{},rooms:{},chains:["garden","orchard"],pairsDone:0};
 }
+function migrate(s){s.rooms=s.rooms||{};s.chains=s.chains||["garden","orchard"];s.pairsDone=s.pairsDone||0;s.seen=s.seen||{};return s}
 function save(){localStorage.setItem(K,JSON.stringify(S))}
-function load(){try{const j=JSON.parse(localStorage.getItem(K));if(j&&j.grid&&j.grid.length===W*H)return j}catch(e){}return null}
+function load(){try{const j=JSON.parse(localStorage.getItem(K));if(j&&j.grid&&j.grid.length===W*H)return migrate(j)}catch(e){}return null}
 S=load()||freshState();
+/* ---------- derived rules ---------- */
+const rl=k=>S.rooms[k]||0;
+const regenMs=()=>rl("fridge")>=3?60000:rl("fridge")>=2?90000:120000;
+const genCharges=()=>rl("pantry")>=2?8:GEN_CHARGES;
+const genRest=()=>rl("garden")>=3?GEN_REST_MS/2:GEN_REST_MS;
+const orderSlots=()=>2+Math.min(2,rl("counter"));
+const coinMult=()=>(rl("counter")>=3?1.25:1);
+const coinPlus=()=>(rl("dining")>=2?2:0);
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
 const idx=(x,y)=>y*W+x;
 const nb=i=>{const x=i%W,y=(i-x)/W,o=[];if(x>0)o.push(i-1);if(x<W-1)o.push(i+1);if(y>0)o.push(i-W);if(y<H-1)o.push(i+W);return o};
 const isItem=c=>c&&c.c!==undefined;
 const itemOf=c=>CHAINS[c.c].lv[c.l-1];
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),1800)}
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function toast(m,ms=1800){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),ms)}
 function fly(el,txt){const r=el.getBoundingClientRect(),d=document.createElement("div");d.className="fly";d.textContent=txt;d.style.left=(r.left+r.width/2-10)+"px";d.style.top=(r.top)+"px";document.body.appendChild(d);setTimeout(()=>d.remove(),900)}
 function freeCellNear(i){const seen=new Set([i]),q=[i];while(q.length){const c=q.shift();for(const n of nb(c)){if(seen.has(n))continue;seen.add(n);const g=S.grid[n];if(g.fog||g.gen)continue;if(!isItem(g))return n;q.push(n)}}return -1}
 function countOnBoard(c,l){return S.grid.filter(g=>isItem(g)&&g.c===c&&g.l===l).length}
+const fmt=ms=>{const m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000);return `${m}:${String(s).padStart(2,"0")}`};
 /* ---------- energy ---------- */
-function tickEnergy(){const now=Date.now();if(S.energy>=MAXE){S.tick=now;return}const n=Math.floor((now-S.tick)/REGEN_MS);if(n>0){S.energy=Math.min(MAXE,S.energy+n);S.tick+=n*REGEN_MS;if(S.energy>=MAXE)S.tick=now;save()}}
-function renderTop(){$("#lvl").firstChild.textContent=S.level;$("#xp").textContent=`${S.exp}/${need(S.level)} xp`;$("#energy").textContent=S.energy;$("#coins").textContent=S.coins;
-  const et=$("#etimer");if(S.energy>=MAXE)et.textContent="";else{const ms=REGEN_MS-(Date.now()-S.tick),m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000);et.textContent=`${m}:${String(s).padStart(2,"0")}`}}
+function tickEnergy(){const now=Date.now(),R=regenMs();if(S.energy>=MAXE){S.tick=now;return}const n=Math.floor((now-S.tick)/R);if(n>0){S.energy=Math.min(MAXE,S.energy+n);S.tick+=n*R;if(S.energy>=MAXE)S.tick=now;save()}}
+function renderTop(){for(const s of["","2"]){$("#lvl"+s).firstChild.textContent=S.level;$("#xp"+s).textContent=`${S.exp}/${need(S.level)} xp`;$("#energy"+s).textContent=S.energy;$("#coins"+s).textContent=S.coins}
+  const et=$("#etimer");if(S.energy>=MAXE)et.textContent="";else{const ms=regenMs()-(Date.now()-S.tick);et.textContent=fmt(Math.max(0,ms))}
+  const k=$("#toKitchen");k.classList.toggle("alert",Object.keys(ROOMS).some(r=>rl(r)<ROOM_MAX&&S.coins>=roomCost(r,rl(r))))}
 /* ---------- orders ---------- */
-function newOrder(slot){const other=S.orders[1-slot];const chains=Object.keys(CHAINS).filter(k=>!other||other.c!==k);const c=chains[Math.floor(Math.random()*chains.length)]||"garden";
-  const lv=Math.min(MAXLV-1,3+Math.floor(Math.random()*Math.min(3,S.level)));const l=Math.max(3,lv);S.orders[slot]={c,l,coins:[0,0,0,4,8,12,20][l],b:CHAINS[c].buddy}}
-function ensureOrders(){S.orders.forEach((o,i)=>{if(!o)newOrder(i)})}
-function renderOrders(){const el=$("#counter");el.innerHTML="";S.orders.forEach((o,i)=>{const d=document.createElement("div");if(!o){d.className="order empty";d.textContent="…";el.appendChild(d);return}
-  const b=BUDDIES[o.b],it=CHAINS[o.c].lv[o.l-1],can=countOnBoard(o.c,o.l)>0;d.className="order"+(can?" can":"");
-  d.innerHTML=`<div class="buddy" style="background:${b.bg};color:${b.ink}">${b.sym}</div><div class="want"><span class="em">${it[0]}<b>${o.l}</b></span><div class="name">${b.name} wants ${it[1]}</div></div><div class="coins">+${o.coins} 🪙</div><button data-slot="${i}">Give</button>`;
+function newOrder(slot){
+  const taken=S.orders.filter((o,i)=>o&&i!==slot);
+  const pairChance=S.level>=3?(rl("pantry")>=3?.45:.3):0;
+  const pairs=PAIRS.filter(p=>S.chains.includes(p.a.c)&&S.chains.includes(p.d.c)&&!taken.some(o=>o.pair&&o.kid===p.kid)&&(p.d.l<MAXLV||rl("stove")>=1));
+  if(pairs.length&&Math.random()<pairChance){const p=pick(pairs);const coins=Math.round((20+10*Math.max(p.a.l,p.d.l)-20)*coinMult())+coinPlus();S.orders[slot]={pair:true,items:[p.a,p.d],b:p.b,kid:p.kid,verdict:p.verdict,coins,exp:3};return}
+  if(rl("stove")>=1&&Math.random()<.2){const c=pick(S.chains);S.orders[slot]={dish:true,items:[{c,l:MAXLV}],b:[pick(CHAINS[c].buddies)],coins:Math.round((rl("stove")>=2?90:60)*coinMult())+coinPlus(),exp:5};return}
+  let chains=S.chains.filter(k=>!taken.some(o=>!o.pair&&o.items[0].c===k));if(!chains.length)chains=S.chains;
+  const c=pick(chains);const l=Math.max(3,Math.min(MAXLV-1,3+Math.floor(Math.random()*Math.min(3,S.level))));
+  S.orders[slot]={items:[{c,l}],b:[pick(CHAINS[c].buddies)],coins:Math.round([0,0,0,4,8,12,20][l]*coinMult())+coinPlus(),exp:1}}
+function ensureOrders(){const n=orderSlots();while(S.orders.length<n)S.orders.push(null);S.orders.length=n;S.orders.forEach((o,i)=>{if(!o)newOrder(i)})}
+const have=it=>countOnBoard(it.c,it.l)>0;
+function renderOrders(){const el=$("#counter");el.innerHTML="";S.orders.forEach((o,i)=>{if(!o)return;const d=document.createElement("div");
+  const can=o.items.every(have);d.className="order"+(can?" can":"")+(o.pair?" pair":"")+(o.dish?" dish":"");
+  const bud=o.b.map(k=>{const b=BUDDIES[k];return `<div class="buddy" style="background:${b.bg};color:${b.ink}">${b.sym}</div>`}).join("");
+  const want=o.items.map(it=>`<span class="em ${have(it)?"have":""}">${CHAINS[it.c].lv[it.l-1][0]}<b>${it.l}</b></span>`).join("");
+  const names=o.b.map(k=>BUDDIES[k].name).join(" & ");
+  const label=o.pair?`${names} want a pair`:o.dish?`${names} wants the dish`:`${names} wants ${CHAINS[o.items[0].c].lv[o.items[0].l-1][1]}`;
+  d.innerHTML=`${o.b.length>1?`<div class="buddies">${bud}</div>`:bud}<div class="want-wrap" style="flex:1"><div class="want">${want}</div><div class="name">${label}</div></div><div class="coins">+${o.coins} 🪙</div><button data-slot="${i}">Give</button>`;
   el.appendChild(d)})}
-function give(slot){const o=S.orders[slot];if(!o)return;const i=S.grid.findIndex(g=>isItem(g)&&g.c===o.c&&g.l===o.l);if(i<0)return;
-  S.grid[i]={};S.coins+=o.coins;const btn=document.querySelector(`.order button[data-slot="${slot}"]`);if(btn)fly(btn,`+${o.coins} 🪙`);
-  const b=BUDDIES[o.b];if(S.facts<3){S.facts++;toast(`${b.name}: ${b.fact}`)}else toast(`${b.name} says thanks!`);
-  addExp(1);S.orders[slot]=null;newOrder(slot);sel=-1;render();save()}
+function give(slot){const o=S.orders[slot];if(!o||!o.items.every(have))return;
+  for(const it of o.items){const i=S.grid.findIndex(g=>isItem(g)&&g.c===it.c&&g.l===it.l);S.grid[i]={}}
+  S.coins+=o.coins;const btn=document.querySelector(`.order button[data-slot="${slot}"]`);if(btn)fly(btn,`+${o.coins} 🪙`);
+  if(o.pair){S.pairsDone++;toast(`${o.verdict} ${o.kid}`,3200)}
+  else{const b=BUDDIES[o.b[0]];if(S.facts<3){S.facts++;toast(`${b.name}: ${b.fact}`)}else toast(o.dish?`${b.name}: What a feast!`:`${b.name} says thanks!`)}
+  if(o.dish&&rl("stove")>=3)giftBox(1);
+  S.orders[slot]=null;newOrder(slot);sel=-1;addExp(o.exp);render();save()}
 /* ---------- progression ---------- */
+function giftBox(n){for(let k=0;k<n;k++){const gi=freeCellNear(idx(3,4));if(gi<0)return;S.grid[gi]={c:pick(S.chains),l:2+Math.floor(Math.random()*2)}}}
 function addExp(n){S.exp+=n;if(S.exp>=need(S.level)){S.exp-=need(S.level);S.level++;S.energy=Math.max(S.energy,MAXE)+15;S.tick=Date.now();
-  $("#lvmsg").textContent=`Level ${S.level}! Energy refilled, plus 15 extra.`;$("#levelup").classList.add("on");
-  const gi=freeCellNear(idx(3,4));if(gi>=0){const c=Math.random()<.5?"garden":"orchard";S.grid[gi]={c,l:3}}}}
-$("#collect").onclick=()=>{$("#levelup").classList.remove("on");render();save();if(S.story===1)showStory()};
+  $("#lvmsg").textContent=`Level ${S.level}! Energy refilled plus 15 extra, and a gift box landed on the board.`;$("#levelup").classList.add("on");giftBox(3)}}
+$("#collect").onclick=()=>{$("#levelup").classList.remove("on");render();save();const beat={2:2,3:3,4:4}[S.level];if(beat!==undefined&&S.story<=beat)showStory(beat)};
+/* ---------- chains / generators ---------- */
+function unlockChain(c){if(S.chains.includes(c))return;S.chains.push(c);const [x,y]=CHAINS[c].spot;let i=idx(x,y);
+  if(S.grid[i].gen||isItem(S.grid[i])){const f=freeCellNear(i);if(f>=0)i=f}
+  S.grid[i]={gen:c,ch:genCharges(),rest:0};for(const n of nb(i))if(S.grid[n].fog&&!S.grid[n].cry)S.grid[n]={};
+  toast(`New: the ${CHAINS[c].gen.name} is on the board. ${CHAINS[c].name} from now on!`,2600)}
 /* ---------- board ---------- */
 let sel=-1;
 function render(){renderTop();renderOrders();const bd=$("#board");if(!bd.children.length){for(let i=0;i<W*H;i++){const d=document.createElement("div");d.className="cell";d.dataset.i=i;bd.appendChild(d)}}
-  const wants=new Set(S.orders.filter(Boolean).map(o=>o.c+o.l));
+  const wants=new Set(S.orders.filter(Boolean).flatMap(o=>o.items.map(it=>it.c+it.l)));
   for(let i=0;i<W*H;i++){const g=S.grid[i],d=bd.children[i];d.className="cell";d.innerHTML="";
     if(g.fog){d.classList.add("fog");d.innerHTML=g.cry?`<span class="cry">💎</span><span class="lk">🔒</span>`:`<span class="lk">🔒</span>`;continue}
     if(g.gen){d.classList.add("gen");const G=CHAINS[g.gen].gen;const resting=g.rest>Date.now();if(resting)d.classList.add("rest");d.innerHTML=`${G.em}<span class="lv">${resting?"":g.ch}</span>${resting?`<span class="tm">${fmt(g.rest-Date.now())}</span>`:""}`}
     else if(isItem(g)){const it=itemOf(g);d.innerHTML=`${it[0]}<span class="lv">${g.l}</span>`;if(wants.has(g.c+g.l))d.classList.add("want")}
     if(i===sel)d.classList.add("sel")}
-  renderBar()}
-const fmt=ms=>{const m=Math.floor(ms/60000),s=Math.floor(ms%60000/1000);return `${m}:${String(s).padStart(2,"0")}`};
+  renderBar();renderKitchen()}
 function renderBar(){const bar=$("#bar");const g=sel>=0?S.grid[sel]:null;
-  if(!g||(!isItem(g)&&!g.gen)){bar.innerHTML=`<div class="t"><b>Vitamin Buddies</b><small>Tap a garden bed or tree to grow something. Drag two of the same together.</small></div>`;return}
+  if(!g||(!isItem(g)&&!g.gen)){bar.innerHTML=`<div class="t"><b>Vitamin Buddies</b><small>Tap a bed, tree or shelf to grow something. Drag two of the same together.</small></div>`;return}
   if(g.gen){const G=CHAINS[g.gen];bar.innerHTML=`<div class="t"><b>${G.gen.name}</b><small>${g.rest>Date.now()?"Resting. Back in "+fmt(g.rest-Date.now()):`Tap to grow a ${G.name.toLowerCase()} item. ${g.ch} left before it rests. Costs 1 ⚡`}</small></div>`;return}
-  const it=itemOf(g),ch=CHAINS[g.c];const b=BUDDIES[ch.buddy];
-  bar.innerHTML=`<div class="t"><b>${it[1]} <span style="font-weight:600;font-size:12px">(Lv.${g.l}/${MAXLV})</span></b><small>${g.l<MAXLV?"Merge 2 of the same to level up.":"The finished dish!"} Carries ${b.name} (${b.nutrient}).</small></div><button id="sell">Sell 1 🪙</button>`;
+  const it=itemOf(g),ch=CHAINS[g.c];const bs=ch.buddies.map(k=>`${BUDDIES[k].name} (${BUDDIES[k].nutrient})`).join(", ");
+  bar.innerHTML=`<div class="t"><b>${it[1]} <span style="font-weight:600;font-size:12px">(Lv.${g.l}/${MAXLV})</span></b><small>${g.l<MAXLV?"Merge 2 of the same to level up.":"The finished dish!"} Carries ${bs}.</small></div><button id="sell">Sell 1 🪙</button>`;
   $("#sell").onclick=()=>{S.grid[sel]={};S.coins+=1;sel=-1;render();save()}}
 function tapGen(i){const g=S.grid[i];if(g.rest>Date.now()){toast("The "+CHAINS[g.gen].gen.name.toLowerCase()+" is resting");return}
-  if(S.energy<=0){toast("Out of energy. It comes back 1 every 2 minutes.");return}
+  if(S.energy<=0){toast(`Out of energy. It comes back 1 every ${regenMs()/1000|0} seconds.`);return}
   const f=freeCellNear(i);if(f<0){toast("No room on the board. Merge or sell something.");return}
   if(S.energy>=MAXE)S.tick=Date.now();S.energy--;
-  S.grid[f]={c:g.gen,l:Math.random()<.15?2:1};g.ch--;if(g.ch<=0){g.ch=GEN_CHARGES;g.rest=Date.now()+GEN_REST_MS}
-  render();const d=$("#board").children[f];d.classList.add("pop");save()}
+  S.grid[f]={c:g.gen,l:Math.random()<.15?2:1};g.ch--;if(g.ch<=0){g.ch=genCharges();g.rest=Date.now()+genRest()}
+  render();$("#board").children[f].classList.add("pop");save()}
 function clearFogAround(i){for(const n of nb(i)){const g=S.grid[n];if(g.fog){if(g.cry){S.grid[n]={};S.energy+=20;toast("💎 Energy crystal! +20 ⚡")}else S.grid[n]={}}}}
 function group(i,c,l){const seen=new Set([i]),q=[i];while(q.length){const x=q.shift();for(const n of nb(x)){if(seen.has(n))continue;const g=S.grid[n];if(isItem(g)&&g.c===c&&g.l===l){seen.add(n);q.push(n)}}}return [...seen]}
 function drop(from,to){if(from===to)return;const a=S.grid[from],b=S.grid[to];
-  if(b.fog||b.gen){return}
+  if(b.fog||b.gen){render();return}
   if(!isItem(b)){S.grid[to]=a;S.grid[from]={};sel=to;render();save();return}
   if(b.c===a.c&&b.l===a.l&&a.l<MAXLV){
     S.grid[to]={c:a.c,l:a.l};S.grid[from]={};
     const grp=group(to,a.c,a.l);
-    if(grp.length>=5){const five=grp.slice(0,5);five.forEach(x=>S.grid[x]={});S.grid[to]={c:a.c,l:a.l+1};const f2=freeCellNear(to);if(f2>=0)S.grid[f2]={c:a.c,l:a.l+1};toast("5 merged: two for the price of one!")}
+    if(grp.length>=5){grp.slice(0,5).forEach(x=>S.grid[x]={});S.grid[to]={c:a.c,l:a.l+1};const f2=freeCellNear(to);if(f2>=0)S.grid[f2]={c:a.c,l:a.l+1};toast("5 merged: two for the price of one!")}
     else S.grid[to]={c:a.c,l:a.l+1};
-    clearFogAround(to);addExp(0);sel=to;render();$("#board").children[to].classList.add("pop");
+    clearFogAround(to);sel=to;render();$("#board").children[to].classList.add("pop");
     if(S.grid[to].l===MAXLV&&!S.seen[a.c]){S.seen[a.c]=1;toast(`You made ${CHAINS[a.c].lv[MAXLV-1][1]}!`)}
     save();return}
   toast(a.l===MAXLV?"That's already the finished dish.":"Those don't match.");render()}
 /* ---------- pointer handling ---------- */
-const ghost=$("#ghost");let drag=null;
-const bd=$("#board");
+const ghost=$("#ghost");let drag=null;const bd=$("#board");
 bd.addEventListener("pointerdown",e=>{const cell=e.target.closest(".cell");if(!cell)return;const i=+cell.dataset.i,g=S.grid[i];drag={i,x:e.clientX,y:e.clientY,moved:false,item:isItem(g)};bd.setPointerCapture(e.pointerId)});
 bd.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)>8&&drag.item){drag.moved=true;ghost.textContent=itemOf(S.grid[drag.i])[0];ghost.style.display="block";bd.children[drag.i].classList.add("drag")}
   if(drag.moved){ghost.style.left=e.clientX+"px";ghost.style.top=e.clientY+"px"}});
 function endDrag(e){if(!drag)return;const d=drag;drag=null;ghost.style.display="none";bd.children[d.i].classList.remove("drag");
-  if(d.moved){ghost.style.display="none";const el=document.elementFromPoint(e.clientX,e.clientY),cell=el&&el.closest(".cell");if(cell)drop(d.i,+cell.dataset.i);else render();return}
+  if(d.moved){const el=document.elementFromPoint(e.clientX,e.clientY),cell=el&&el.closest(".cell");if(cell)drop(d.i,+cell.dataset.i);else render();return}
   const g=S.grid[d.i];if(g.gen){sel=d.i;tapGen(d.i)}else if(isItem(g)){sel=d.i;render()}else if(g.fog){sel=-1;render();toast(g.cry?"Merge next to it to crack the crystal.":"Merge something next to this to clear it.")}else{sel=-1;render()}}
 bd.addEventListener("pointerup",endDrag);bd.addEventListener("pointercancel",endDrag);
 $("#counter").addEventListener("click",e=>{const b=e.target.closest("button[data-slot]");if(b)give(+b.dataset.slot)});
-$("#nav").onclick=()=>toast("The Kitchen opens in the next build.");
+/* ---------- kitchen ---------- */
+function renderKitchen(){const el=$("#rooms");el.innerHTML="";const keys=Object.keys(ROOMS);const order=[keys[0],keys[1],keys[2],keys[3],"chef",keys[4],keys[5]];
+  for(const k of order){const d=document.createElement("div");if(k==="chef"){d.className="room chefspot";d.innerHTML=`<div class="chef">🧑‍🍳</div>`;el.appendChild(d);continue}
+    const r=ROOMS[k],l=rl(k),maxed=l>=ROOM_MAX,afford=!maxed&&S.coins>=roomCost(k,l);d.className="room"+(maxed?" max":"");d.dataset.room=k;
+    d.innerHTML=`<span class="em">${r.em}</span>${r.name}<span class="lvl">${maxed?"Max":`Lv.${l}/${ROOM_MAX}`}</span>${afford?`<span class="badge">🔨 Upgrade</span>`:""}`;el.appendChild(d)}
+  $("#cafesub").textContent=`Level ${S.level} · ${S.chains.length} foods growing · ${orderSlots()} seats at the counter`}
+let roomOpen=null;
+function openRoom(k){roomOpen=k;const r=ROOMS[k],l=rl(k);$("#rname").textContent=`${r.em} ${r.name}`;
+  if(l>=ROOM_MAX){$("#rlv").textContent="Fully upgraded";$("#rexp").textContent="—";$("#runl").textContent="Nothing left to build here.";$("#rprog").textContent="";$("#rup").disabled=true}
+  else{const cost=roomCost(k,l);$("#rlv").textContent=`Lv.${l}/${ROOM_MAX}`;$("#rexp").textContent=`${roomExp(k,l)} EXP`;$("#runl").textContent=r.unl[l];
+    $("#rprog").innerHTML=`<span class="${S.coins<cost?"short":""}">${Math.min(S.coins,cost)}</span>/${cost}`;$("#rup").disabled=S.coins<cost}
+  $("#roomcard").classList.add("on")}
+function upgradeRoom(){const k=roomOpen,l=rl(k);const cost=roomCost(k,l);if(S.coins<cost||l>=ROOM_MAX)return;S.coins-=cost;S.rooms[k]=l+1;
+  const unlock={garden:["greens","citrus",null],pantry:["grain",null,null],fridge:["dairy",null,null]}[k];if(unlock&&unlock[l])unlockChain(unlock[l]);
+  if(k==="counter")ensureOrders();
+  $("#roomcard").classList.remove("on");fly($("#rooms"),`+${roomExp(k,l)} EXP`);addExp(roomExp(k,l));render();save()}
+$("#rooms").addEventListener("click",e=>{const d=e.target.closest(".room[data-room]");if(d)openRoom(d.dataset.room)});
+$("#rclose").onclick=()=>$("#roomcard").classList.remove("on");
+$("#rup").onclick=upgradeRoom;
+function show(screen){$("#boardScreen").classList.toggle("on",screen==="board");$("#kitchenScreen").classList.toggle("on",screen==="kitchen");render()}
+$("#toKitchen").onclick=()=>show("kitchen");$("#toBoard").onclick=()=>show("board");
 /* ---------- story ---------- */
-function showStory(){if(S.story>=STORY.length)return;const s=STORY[S.story];$("#swho").textContent=s.who;$("#stext").textContent=s.text;$("#story").classList.add("on")}
-$("#sok").onclick=()=>{S.story++;$("#story").classList.remove("on");save();if(S.story===1&&S.level<2){}};
+function showStory(n){if(n>=STORY.length)return;S.story=n;const s=STORY[n];$("#swho").textContent=s.who;$("#stext").textContent=s.text;$("#story").classList.add("on")}
+$("#sok").onclick=()=>{const n=S.story;S.story=n+1;$("#story").classList.remove("on");save();if(n===0)showStory(1);if(n===2)show("kitchen")};
 /* ---------- boot ---------- */
 tickEnergy();ensureOrders();render();save();
-if(S.story===0)showStory();
-setInterval(()=>{tickEnergy();renderTop();if(!drag&&S.grid.some(g=>g.gen&&g.rest>Date.now()-1500))render();},1000);
+if(S.story===0)showStory(0);
+setInterval(()=>{tickEnergy();renderTop();if(!drag&&$("#boardScreen").classList.contains("on")&&S.grid.some(g=>g.gen&&g.rest>Date.now()-1500))render()},1000);
 window.addEventListener("keydown",e=>{if(e.key==="R"&&e.shiftKey&&e.altKey){localStorage.removeItem(K);location.reload()}});
 </script>
 </body>
