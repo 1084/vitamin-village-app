@@ -27,7 +27,7 @@ html,body{margin:0;height:100%;background:#1d2a4a;font-family:-apple-system,"Seg
 .order .want .em{font-size:28px;line-height:1;display:block;background:#fff;border-radius:10px;padding:4px;position:relative;flex:1}
 .order .want .em.have{background:#dff5d0}
 .order .want .em b{position:absolute;right:2px;bottom:2px;font-size:10px;background:var(--ink);color:#fff;border-radius:6px;padding:1px 4px}
-.order .name{font-size:10.5px;font-weight:700;margin-top:2px;line-height:1.15}
+.order .name{font-size:10px;font-weight:700;margin-top:2px;line-height:1.15}
 .order .coins{position:absolute;top:-10px;right:6px;background:var(--gold);color:#7a4b00;font-size:12px;font-weight:900;border-radius:10px;padding:2px 7px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
 .order button{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);background:var(--green);color:#fff;border:0;border-radius:12px;padding:6px 18px;font-weight:900;font-size:15px;box-shadow:0 3px 0 var(--green2);display:none}
 .order.can button{display:block}
@@ -236,7 +236,7 @@ function renderOrders(){const el=$("#counter");el.innerHTML="";S.orders.forEach(
   const can=o.items.every(have);d.className="order"+(can?" can":"")+(o.pair?" pair":"")+(o.dish?" dish":"");
   const bud=o.b.map(k=>{const b=BUDDIES[k];return `<div class="buddy" style="background:${b.bg};color:${b.ink}">${b.sym}</div>`}).join("");
   const want=o.items.map(it=>`<span class="em ${have(it)?"have":""}">${CHAINS[it.c].lv[it.l-1][0]}<b>${it.l}</b></span>`).join("");
-  const names=o.b.map(k=>BUDDIES[k].name).join(" & ");
+  const names=o.b.map(k=>`${BUDDIES[k].name} (${BUDDIES[k].nutrient})`).join(" & ");
   const label=o.pair?`${names} want a pair`:o.dish?`${names} wants the dish`:`${names} wants ${CHAINS[o.items[0].c].lv[o.items[0].l-1][1]}`;
   d.innerHTML=`${o.b.length>1?`<div class="buddies">${bud}</div>`:bud}<div class="want-wrap" style="flex:1"><div class="want">${want}</div><div class="name">${label}</div></div><div class="coins">+${o.coins} 🪙</div><button data-slot="${i}">Give</button>`;
   el.appendChild(d)})}
@@ -244,7 +244,7 @@ function give(slot){const o=S.orders[slot];if(!o||!o.items.every(have))return;
   for(const it of o.items){const i=S.grid.findIndex(g=>isItem(g)&&g.c===it.c&&g.l===it.l);S.grid[i]={}}
   S.coins+=o.coins;const btn=document.querySelector(`.order button[data-slot="${slot}"]`);if(btn)fly(btn,`+${o.coins} 🪙`);
   if(o.pair){S.pairsDone++;toast(`${o.verdict} ${o.kid}`,3200)}
-  else{const b=BUDDIES[o.b[0]];if(S.facts<3){S.facts++;toast(`${b.name}: ${b.fact}`)}else toast(o.dish?`${b.name}: What a feast!`:`${b.name} says thanks!`)}
+  else{const b=BUDDIES[o.b[0]];if(S.facts<3){S.facts++;toast(`${b.name} (${b.nutrient}): ${b.fact}`)}else toast(o.dish?`${b.name} (${b.nutrient}): What a feast!`:`${b.name} (${b.nutrient}) says thanks!`)}
   if(o.dish&&rl("stove")>=3)giftBox(1);
   S.orders[slot]=null;newOrder(slot);sel=-1;addExp(o.exp);render();save()}
 /* ---------- progression ---------- */
@@ -325,7 +325,7 @@ $("#rup").onclick=upgradeRoom;
 function show(screen){$("#boardScreen").classList.toggle("on",screen==="board");$("#kitchenScreen").classList.toggle("on",screen==="kitchen");render()}
 $("#toKitchen").onclick=()=>show("kitchen");$("#toBoard").onclick=()=>show("board");
 /* ---------- story ---------- */
-function showStory(n){if(n>=STORY.length)return;S.story=n;const s=STORY[n];$("#swho").textContent=s.who;$("#stext").textContent=s.text;$("#story").classList.add("on")}
+function showStory(n){if(n>=STORY.length)return;S.story=n;const s=STORY[n];const bw=Object.values(BUDDIES).find(b=>b.name===s.who);$("#swho").textContent=bw?`${s.who} (${bw.nutrient})`:s.who;$("#stext").textContent=s.text;$("#story").classList.add("on")}
 $("#sok").onclick=()=>{const n=S.story;S.story=n+1;$("#story").classList.remove("on");save();if(n===0)showStory(1);if(n===2)show("kitchen")};
 /* ---------- boot ---------- */
 tickEnergy();ensureOrders();render();save();
