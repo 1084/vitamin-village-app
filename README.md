@@ -13,6 +13,22 @@ The game file itself is *not* edited here. `npm run prepare-www` copies it from 
 storefront repo, removes the service-worker registration, and appends the native
 bridge. Fix the game in one place (the storefront repo), then rebuild.
 
+## Test kitchen (`web/`)
+
+`web/` is a static site served by Cloudflare Pages from this private repo, behind
+Cloudflare Access (an email allowlist), so testers can play without the source
+being public:
+
+```
+web/index.html          landing page: the three versions
+web/plates/index.html   Plates, the card game
+web/buddies/index.html  Vitamin Buddies, the merge game
+web/_headers            noindex + basic security headers
+```
+
+The original game stays public in the storefront repo (`1084.github.io/vitamin-village`).
+Pages settings: no build command, output directory `web`. Every push to `main` deploys.
+
 ## Layout
 
 ```
